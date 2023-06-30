@@ -1,15 +1,43 @@
 #include "SwitchServer.h"
 #include <functional>
 
-MszSwitchWebApi::MszSwitchWebApi(int port) : server(port) { }
+MszSwitchWebApi::MszSwitchWebApi(int port) {
+  this->serverPort = port;
+}
 
 void MszSwitchWebApi::begin() {
-  server.on("/switchon", std::bind(&MszSwitchWebApi::handleSwitchOn, this));
-  server.on("/switchoff", std::bind(&MszSwitchWebApi::handleSwitchOff, this));
-  server.on("/updateswitchdata", std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this));
-  server.on("/updatemetadata", std::bind(&MszSwitchWebApi::handleUpdateMetadata, this));
+  this->registerEndpoint("/switchon", std::bind(&MszSwitchWebApi::handleSwitchOn, this, std::placeholders::_1));
+  this->registerEndpoint("/switchoff", std::bind(&MszSwitchWebApi::handleSwitchOff, this, std::placeholders::_1));
+  this->registerEndpoint("/updateswitchdata", std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this, std::placeholders::_1));
+  this->registerEndpoint("/updatemetadata", std::bind(&MszSwitchWebApi::handleUpdateMetadata, this, std::placeholders::_1));
   
-  server.begin();
+  this->beginServe();
+}
+
+void MszSwitchWebApi::loop() {
+  this->beginServe();
+}
+
+void MszSwitchWebApi::handleSwitchOn(MszSwitchWebApiRequestContext *context) {
+  String switchName = this->getSwitchNameParameter(context);
+  CoreHandlerResponse response = this->handleSwitchOnCore(switchName);
+  return this->sendResponseData(context, response);
+}
+
+void MszSwitchWebApi::handleSwitchOff(MszSwitchWebApiRequestContext *context) {
+  String switchName = this->getSwitchNameParameter(context);
+  CoreHandlerResponse response = this->handleSwitchOffCore(switchName);
+  return this->sendResponseData(context, response);
+}
+
+void MszSwitchWebApi::handleUpdateSwitchData(MszSwitchWebApiRequestContext *context) {
+  CoreHandlerResponse response = this->handleUpdateSwitchDataCore();
+  return this->sendResponseData(context, response);
+}
+
+void MszSwitchWebApi::handleUpdateMetadata(MszSwitchWebApiRequestContext *context) {
+  CoreHandlerResponse response = this->handleUpdateMetadataCore();
+  return this->sendResponseData(context, response);
 }
 
 CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore(String switchName) {
@@ -43,58 +71,3 @@ CoreHandlerResponse MszSwitchWebApi::handleUpdateMetadataCore() {
   response.returnContent = "Updating general metadata...";
   return response;
 }
-
-#if defined(ESP8266)
-void MszSwitchWebApi::loop() {
-  server.handleClient();
-}
-
-void MszSwitchWebApi::handleSwitchOn() {
-  String switchName = server.arg("name");
-  CoreHandlerResponse responseData = handleSwitchOnCore(switchName);
-  server.send(responseData.statusCode, responseData.contentType, responseData.returnContent);
-}
-
-void MszSwitchWebApi::handleSwitchOff() {
-  String switchName = server.arg("name");
-  CoreHandlerResponse responseData = handleSwitchOnCore(switchName);
-  server.send(responseData.statusCode, responseData.contentType, responseData.returnContent);
-}
-
-void MszSwitchWebApi::handleUpdateSwitchData() {
-  CoreHandlerResponse responseData = handleUpdateSwitchDataCore();
-  server.send(responseData.statusCode, responseData.contentType, responseData.returnContent);
-}
-
-void MszSwitchWebApi::handleUpdateMetadata() {
-  CoreHandlerResponse responseData = handleUpdateMetadataCore();
-  server.send(responseData.statusCode, responseData.contentType, responseData.returnContent);
-}
-
-#elif defined(EPS32)
-void MyWebServer::loop() {
-  server.begin();
-}
-
-server.on("/switchon", HTTP_GET, [](AsyncWebServerRequest *request) {
-  String switchName = request->arg("name");
-  // Add your code to switch on 'switchName'
-  request->send(200, "text/plain", "Switch " + switchName + " is now on");
-});
-
-server.on("/switchoff", HTTP_GET, [](AsyncWebServerRequest *request) {
-  String switchName = request->arg("name");
-  // Add your code to switch off 'switchName'
-  request->send(200, "text/plain", "Switch " + switchName + " is now off");
-});
-
-server.on("/updateswitchdata", HTTP_GET, [](AsyncWebServerRequest *request) {
-  // Add your code to update switch data
-  request->send(200, "text/plain", "Switch data updated");
-});
-
-server.on("/updatemetadata", HTTP_GET, [](AsyncWebServerRequest *request) {
-  // Add your code to update meta data
-  request->send(200, "text/plain", "Metadata updated");
-});
-#endif
