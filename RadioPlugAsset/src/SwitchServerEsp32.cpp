@@ -1,5 +1,8 @@
 #if defined(ESP32)
 
+#include <string>
+#include <sstream>
+#include <iostream>
 #include <functional>
 #include "SwitchServerEsp32.h"
 
@@ -15,46 +18,38 @@ void MszSwitchApiEsp32::beginServe()
 
 void MszSwitchApiEsp32::registerEndpoint(String endpoint, std::function<void(MszSwitchWebApiRequestContext *)> handler)
 {
-    server.on(endpoint.c_str(), HTTP_GET, [&handler](AsyncWebServerRequest *request) {
-        MszSwitchWebApiEsp32RequestContext context(request);
-        context.request = request;
-        handler((MszSwitchWebApiRequestContext*)&context);
+    server.on(endpoint.c_str(), HTTP_GET, [&handler]() {
+        handler(nullptr);
     });
 }
 
 void MszSwitchApiEsp32::sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse response)
 {
-    MszSwitchWebApiEsp32RequestContext *esp32Context = (MszSwitchWebApiEsp32RequestContext *)context;
-    esp32Context->request->send(response.statusCode, response.contentType, response.returnContent);
+    server.send(response.statusCode, response.contentType, response.returnContent);
 }
 
 String MszSwitchApiEsp32::getSwitchNameParameter(MszSwitchWebApiRequestContext *context)
 {
-    MszSwitchWebApiEsp32RequestContext *esp32Context = (MszSwitchWebApiEsp32RequestContext *)context;
-    return esp32Context->request->arg("name");
+    return server.arg("name");
 }
 
 SwitchDataParams MszSwitchApiEsp32::getSwitchDataParameters(MszSwitchWebApiRequestContext *context)
 {
-    MszSwitchWebApiEsp32RequestContext *esp32Context = (MszSwitchWebApiEsp32RequestContext *)context;
-
     SwitchDataParams params;
-    // params.switchId = server.arg("id");
-    //  params.isTriState = server.arg("isTriState");
-    params.switchName = esp32Context->request->arg("name");
-    params.switchCommand = esp32Context->request->arg("switchName");
+    params.switchId = std::stoi(server.arg("id").c_str());
+    params.switchName = server.arg("name");
+    params.switchCommand = server.arg("switchName");
+    std::istringstream conv(server.arg("isTriState").c_str());
+    conv >> std::boolalpha >> params.isTriState;
     return params;
 }
 
 SwitchMetadataParams MszSwitchApiEsp32::getSwitchMetadataParameters(MszSwitchWebApiRequestContext *context)
 {
-    MszSwitchWebApiEsp32RequestContext *esp32Context = (MszSwitchWebApiEsp32RequestContext *)context;
-
     SwitchMetadataParams params;
-    // params.switchId = server.arg("id");
-    params.sensorName = esp32Context->request->arg("name");
-    params.sensorLocation = esp32Context->request->arg("location");
-    params.token = esp32Context->request->arg("token");
+    params.sensorName = server.arg("name");
+    params.sensorLocation = server.arg("location");
+    params.token = server.arg("token");
     return params;
 }
 

@@ -4,18 +4,7 @@
 #define SwitchServerEsp32_h
 
 #include "SwitchServer.h"
-#include <ESPAsyncWebServer.h>
-
-/// @brief Defines a context object for a single request. Needed for some libraries, but not all.
-class MszSwitchWebApiEsp32RequestContext : public MszSwitchWebApiRequestContext {
-public:
-  MszSwitchWebApiEsp32RequestContext(AsyncWebServerRequest *requestParam) 
-  {
-    request = requestParam;
-  }
-
-  AsyncWebServerRequest *request;
-};
+#include <WebServer.h>
 
 /// @brief ESP32 implementation of the MszSwitchWebApi class.
 /// @details This class implements the MszSwitchWebApi class for the ESP32 platform.
@@ -24,7 +13,7 @@ public :
   MszSwitchApiEsp32(int port);
 
 protected:
-  AsyncWebServer server;
+  WebServer server;
   
   virtual void beginServe() override;
   virtual void registerEndpoint(String endPoint, std::function<void(MszSwitchWebApiRequestContext*)> handler) override;
