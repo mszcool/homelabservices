@@ -17,6 +17,7 @@ MszSwitchWebApi::MszSwitchWebApi(int port) {
 }
 
 void MszSwitchWebApi::begin() {
+  this->registerEndpoint(API_ENDPOINT_INFO, std::bind(&MszSwitchWebApi::handleGetInfo, this, std::placeholders::_1));
   this->registerEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this, std::placeholders::_1));
   this->registerEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this, std::placeholders::_1));
   this->registerEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this, std::placeholders::_1));
@@ -27,6 +28,11 @@ void MszSwitchWebApi::begin() {
 
 void MszSwitchWebApi::loop() {
   this->beginServe();
+}
+
+void MszSwitchWebApi::handleGetInfo(MszSwitchWebApiRequestContext *context) {
+  CoreHandlerResponse response = this->handleGetInfoCore();
+  return this->sendResponseData(context, response);
 }
 
 void MszSwitchWebApi::handleSwitchOn(MszSwitchWebApiRequestContext *context) {
@@ -49,6 +55,14 @@ void MszSwitchWebApi::handleUpdateSwitchData(MszSwitchWebApiRequestContext *cont
 void MszSwitchWebApi::handleUpdateMetadata(MszSwitchWebApiRequestContext *context) {
   CoreHandlerResponse response = this->handleUpdateMetadataCore();
   return this->sendResponseData(context, response);
+}
+
+CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore() {
+  CoreHandlerResponse response;
+  response.statusCode = 200;
+  response.contentType = "text/plain";
+  response.returnContent = "Switch API is running";
+  return response;
 }
 
 CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore(String switchName) {

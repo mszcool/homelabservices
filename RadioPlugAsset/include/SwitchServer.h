@@ -51,6 +51,7 @@ protected:
    * The methods below contain the library-specific request handling. They call the corresponding
    * core-methods which are library independent.
    */
+    void handleGetInfo(MszSwitchWebApiRequestContext *context);
     void handleSwitchOn(MszSwitchWebApiRequestContext *context);
     void handleSwitchOff(MszSwitchWebApiRequestContext *context);
     void handleUpdateSwitchData(MszSwitchWebApiRequestContext *context);
@@ -60,6 +61,7 @@ protected:
    * The methods below contain the core logic. They are called by the handlers above.
    * These methods are library-independent and can be used for different platforms.
    */
+  CoreHandlerResponse handleGetInfoCore();
   CoreHandlerResponse handleSwitchOnCore(String switchName);
   CoreHandlerResponse handleSwitchOffCore(String switchName);
   CoreHandlerResponse handleUpdateSwitchDataCore();
