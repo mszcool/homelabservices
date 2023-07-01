@@ -1,7 +1,7 @@
 #if defined(EPS32)
 
-#include "SwitchServer.h"
 #include <functional>
+#include "SwitchServerEsp32.h"
 
 MszSwitchApiEsp32::MszSwitchApiEsp32(int port) : MszSwitchWebApi(port)
 {

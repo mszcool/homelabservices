@@ -1,7 +1,7 @@
 #if defined(ESP8266)
 
-#include "SwitchServer.h"
 #include <functional>
+#include "SwitchServerEsp8266.h"
 
 MszSwitchApiEsp8266::MszSwitchApiEsp8266(int port) : MszSwitchWebApi(port)
 {

@@ -3,13 +3,6 @@
 
 #include <Arduino.h>
 
-#if defined(ESP8266)
-#include <WiFiManager.h>
-#include <ESP8266WebServer.h>
-#elif defined(ESP32)
-#include <ESPAsyncWebServer.h>
-#endif
-
 /// @brief Response struct for the core handler methods.
 /// @details This struct encapsulates the responses the returned by the core methods for the library specific methods.
 struct CoreHandlerResponse {
@@ -82,51 +75,5 @@ protected:
   virtual SwitchMetadataParams getSwitchMetadataParameters(MszSwitchWebApiRequestContext *context) = 0;
   virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) = 0;
 };
-
-#if defined(ESP8266)
-
-/// @brief ESP8266 implementation of the MszSwitchWebApi class.
-/// @details This class implements the MszSwitchWebApi class for the ESP8266 platform.
-class MszSwitchApiEsp8266 : public MszSwitchWebApi {
-public:
-  MszSwitchApiEsp8266(int port);
-
-protected:
-  ESP8266WebServer server;
-  
-  virtual void beginServe() override;
-  virtual void registerEndpoint(String endPoint, std::function<void(MszSwitchWebApiRequestContext*)> handler) override;
-  virtual String getSwitchNameParameter(MszSwitchWebApiRequestContext *context) override;
-  virtual SwitchDataParams getSwitchDataParameters(MszSwitchWebApiRequestContext *context) override;
-  virtual SwitchMetadataParams getSwitchMetadataParameters(MszSwitchWebApiRequestContext *context) override;
-  virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) override;
-};
-
-#elif defined(ESP32)
-
-/// @brief Defines a context object for a single request. Needed for some libraries, but not all.
-class MszSwitchWebApiEsp32RequestContext : public MszSwitchWebApiRequestContext {
-public:
-  AsyncWebServerRequest *request;
-};
-
-/// @brief ESP32 implementation of the MszSwitchWebApi class.
-/// @details This class implements the MszSwitchWebApi class for the ESP32 platform.
-class MszSwitchApiEsp32 : public MszSwitchWebApi {
-public :
-  MszSwitchApiEsp32(int port);
-
-protected:
-  AsyncWebServer server;
-  
-  virtual void beginServe() override;
-  virtual void registerEndpoint(String endPoint, std::function<void(MszSwitchWebApiRequestContext*)> handler) override;
-  virtual String getSwitchNameParameter(MszSwitchWebApiRequestContext *context) override;
-  virtual SwitchDataParams getSwitchDataParameters(MszSwitchWebApiRequestContext *context) override;
-  virtual SwitchMetadataParams getSwitchMetadataParameters(MszSwitchWebApiRequestContext *context) override;
-  virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) override;
-};
-
-#endif
 
 #endif //MSZ_SWITCHSERVER_H
