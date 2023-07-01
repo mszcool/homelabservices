@@ -1,15 +1,26 @@
 #include "SwitchServer.h"
 #include <functional>
 
+const char* API_ENDPOINT_INFO = "info";
+const char* API_ENDPOINT_ON = "/switchon";
+const char* API_ENDPOINT_OFF = "/switchoff";
+const char* API_ENDPOINT_UPDATESWITCHDATA = "/updateswitchdata";
+const char* API_ENDPOINT_UPDATEINFO = "/updatemetadata";
+
+const char *API_PARAM_SWITCHID = "switchid";
+const char *API_PARAM_SWITCHNAME = "switchname";
+const char *API_PARAM_SWITCHCOMMAND = "switchcommand";
+const char *API_PARAM_ISTRISTATE = "switchistristate";
+
 MszSwitchWebApi::MszSwitchWebApi(int port) {
   this->serverPort = port;
 }
 
 void MszSwitchWebApi::begin() {
-  this->registerEndpoint("/switchon", std::bind(&MszSwitchWebApi::handleSwitchOn, this, std::placeholders::_1));
-  this->registerEndpoint("/switchoff", std::bind(&MszSwitchWebApi::handleSwitchOff, this, std::placeholders::_1));
-  this->registerEndpoint("/updateswitchdata", std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this, std::placeholders::_1));
-  this->registerEndpoint("/updatemetadata", std::bind(&MszSwitchWebApi::handleUpdateMetadata, this, std::placeholders::_1));
+  this->registerEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this, std::placeholders::_1));
+  this->registerEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this, std::placeholders::_1));
+  this->registerEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this, std::placeholders::_1));
+  this->registerEndpoint(API_ENDPOINT_UPDATEINFO, std::bind(&MszSwitchWebApi::handleUpdateMetadata, this, std::placeholders::_1));
   
   this->beginServe();
 }
