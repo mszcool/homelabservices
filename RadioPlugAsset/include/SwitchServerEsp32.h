@@ -1,5 +1,8 @@
 #if defined(ESP32)
 
+#ifndef SwitchServerEsp32_h
+#define SwitchServerEsp32_h
+
 #include "SwitchServer.h"
 #include <ESPAsyncWebServer.h>
 
@@ -26,4 +29,6 @@ protected:
   virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) override;
 };
 
-#endif
+#endif // SwitchServerEsp32_h
+
+#endif // ESP32

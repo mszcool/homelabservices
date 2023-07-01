@@ -1,5 +1,8 @@
 #if defined(ESP8266)
 
+#ifndef SwitchServerEsp8266_h
+#define SwitchServerEsp8266_h
+
 #include <WiFiManager.h>
 #include <ESP8266WebServer.h>
 #include "SwitchServer.h"
@@ -21,4 +24,6 @@ protected:
   virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) override;
 };
 
-#endif
+#endif // SwitchServerEsp8266_h
+
+#endif // ESP8266
