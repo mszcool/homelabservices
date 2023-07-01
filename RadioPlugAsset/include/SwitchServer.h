@@ -30,7 +30,9 @@ struct SwitchMetadataParams {
 
 /// @brief Defines a context object for a single request. Needed for some libraries, but not all.
 class MszSwitchWebApiRequestContext {
-
+public:
+  MszSwitchWebApiRequestContext() {}
+  virtual ~MszSwitchWebApiRequestContext() {}
 };
 
 /// @class MszSwitchWebApi

@@ -9,6 +9,11 @@
 /// @brief Defines a context object for a single request. Needed for some libraries, but not all.
 class MszSwitchWebApiEsp32RequestContext : public MszSwitchWebApiRequestContext {
 public:
+  MszSwitchWebApiEsp32RequestContext(AsyncWebServerRequest *requestParam) 
+  {
+    request = requestParam;
+  }
+
   AsyncWebServerRequest *request;
 };
 
