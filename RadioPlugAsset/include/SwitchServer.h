@@ -28,13 +28,6 @@ struct SwitchMetadataParams {
   String sensorLocation;
 };
 
-/// @brief Defines a context object for a single request. Needed for some libraries, but not all.
-class MszSwitchWebApiRequestContext {
-public:
-  MszSwitchWebApiRequestContext() {}
-  virtual ~MszSwitchWebApiRequestContext() {}
-};
-
 /// @class MszSwitchWebApi
 /// @brief Switch Web Server class handling on/off requests.
 /// @details This class handles the web server which is used to turn on and off radio switches.
@@ -45,17 +38,18 @@ public:
   void loop();
 
 protected:
+  bool logLoopDone = false;
   int serverPort;
 
   /*
    * The methods below contain the library-specific request handling. They call the corresponding
    * core-methods which are library independent.
    */
-    void handleGetInfo(MszSwitchWebApiRequestContext *context);
-    void handleSwitchOn(MszSwitchWebApiRequestContext *context);
-    void handleSwitchOff(MszSwitchWebApiRequestContext *context);
-    void handleUpdateSwitchData(MszSwitchWebApiRequestContext *context);
-    void handleUpdateMetadata(MszSwitchWebApiRequestContext *context);
+    void handleGetInfo();
+    void handleSwitchOn();
+    void handleSwitchOff();
+    void handleUpdateSwitchData();
+    void handleUpdateMetadata();
 
   /*
    * The methods below contain the core logic. They are called by the handlers above.
@@ -73,11 +67,12 @@ protected:
   
   /// @brief Defines a template for a context parameter specific to the library.
   virtual void beginServe() = 0;
-  virtual void registerEndpoint(String endPoint, std::function<void(MszSwitchWebApiRequestContext*)> handler) = 0;
-  virtual String getSwitchNameParameter(MszSwitchWebApiRequestContext *context) = 0;
-  virtual SwitchDataParams getSwitchDataParameters(MszSwitchWebApiRequestContext *context) = 0;
-  virtual SwitchMetadataParams getSwitchMetadataParameters(MszSwitchWebApiRequestContext *context) = 0;
-  virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) = 0;
+  virtual void handleClient() = 0;
+  virtual void registerEndpoint(String endPoint, std::function<void()> handler) = 0;
+  virtual String getSwitchNameParameter() = 0;
+  virtual SwitchDataParams getSwitchDataParameters() = 0;
+  virtual SwitchMetadataParams getSwitchMetadataParameters() = 0;
+  virtual void sendResponseData(CoreHandlerResponse responseData) = 0;
 };
 
 #endif //MSZ_SWITCHSERVER_H

@@ -1,7 +1,7 @@
 #include "SwitchServer.h"
 #include <functional>
 
-const char* API_ENDPOINT_INFO = "info";
+const char* API_ENDPOINT_INFO = "/info";
 const char* API_ENDPOINT_ON = "/switchon";
 const char* API_ENDPOINT_OFF = "/switchoff";
 const char* API_ENDPOINT_UPDATESWITCHDATA = "/updateswitchdata";
@@ -17,44 +17,62 @@ MszSwitchWebApi::MszSwitchWebApi(int port) {
 }
 
 void MszSwitchWebApi::begin() {
-  this->registerEndpoint(API_ENDPOINT_INFO, std::bind(&MszSwitchWebApi::handleGetInfo, this, std::placeholders::_1));
-  this->registerEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this, std::placeholders::_1));
-  this->registerEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this, std::placeholders::_1));
-  this->registerEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this, std::placeholders::_1));
-  this->registerEndpoint(API_ENDPOINT_UPDATEINFO, std::bind(&MszSwitchWebApi::handleUpdateMetadata, this, std::placeholders::_1));
-  
+  Serial.println("Configuring Switch API endpoints");
+  this->registerEndpoint(API_ENDPOINT_INFO, std::bind(&MszSwitchWebApi::handleGetInfo, this));
+  this->registerEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this));
+  this->registerEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this));
+  this->registerEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this));
+  this->registerEndpoint(API_ENDPOINT_UPDATEINFO, std::bind(&MszSwitchWebApi::handleUpdateMetadata, this));
+  Serial.println("Switch API endpoints configured!");
+
+  Serial.println("Starting Switch API...");
   this->beginServe();
+  Serial.println("Switch API started!");
 }
 
 void MszSwitchWebApi::loop() {
-  this->beginServe();
+  if (!this->logLoopDone) {
+    Serial.println("Switch API loop");
+    this->logLoopDone = true;
+  }
+  this->handleClient();
 }
 
-void MszSwitchWebApi::handleGetInfo(MszSwitchWebApiRequestContext *context) {
+void MszSwitchWebApi::handleGetInfo() {
+  Serial.println("Switch API handleGetInfo - enter");
   CoreHandlerResponse response = this->handleGetInfoCore();
-  return this->sendResponseData(context, response);
+  this->sendResponseData(response);
+  Serial.println("Switch API handleGetInfo - exit");
 }
 
-void MszSwitchWebApi::handleSwitchOn(MszSwitchWebApiRequestContext *context) {
-  String switchName = this->getSwitchNameParameter(context);
+void MszSwitchWebApi::handleSwitchOn() {
+  Serial.println("Switch API handleSwitchOn - enter");
+  String switchName = this->getSwitchNameParameter();
   CoreHandlerResponse response = this->handleSwitchOnCore(switchName);
-  return this->sendResponseData(context, response);
+  this->sendResponseData(response);
+  Serial.println("Switch API handleSwitchOn - exit");
 }
 
-void MszSwitchWebApi::handleSwitchOff(MszSwitchWebApiRequestContext *context) {
-  String switchName = this->getSwitchNameParameter(context);
+void MszSwitchWebApi::handleSwitchOff() {
+  Serial.println("Switch API handleSwitchOff - enter");
+  String switchName = this->getSwitchNameParameter();
   CoreHandlerResponse response = this->handleSwitchOffCore(switchName);
-  return this->sendResponseData(context, response);
+  this->sendResponseData(response);
+  Serial.println("Switch API handleSwitchOff - exit");
 }
 
-void MszSwitchWebApi::handleUpdateSwitchData(MszSwitchWebApiRequestContext *context) {
+void MszSwitchWebApi::handleUpdateSwitchData() {
+  Serial.println("Switch API handleUpdateSwitchData - enter");
   CoreHandlerResponse response = this->handleUpdateSwitchDataCore();
-  return this->sendResponseData(context, response);
+  this->sendResponseData(response);
+  Serial.println("Switch API handleUpdateSwitchData - exit");
 }
 
-void MszSwitchWebApi::handleUpdateMetadata(MszSwitchWebApiRequestContext *context) {
+void MszSwitchWebApi::handleUpdateMetadata() {
+  Serial.println("Switch API handleUpdateMetadata - enter");
   CoreHandlerResponse response = this->handleUpdateMetadataCore();
-  return this->sendResponseData(context, response);
+  return this->sendResponseData(response);
+  Serial.println("Switch API handleUpdateMetadata - exit");
 }
 
 CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore() {

@@ -17,11 +17,12 @@ protected:
   ESP8266WebServer server;
   
   virtual void beginServe() override;
-  virtual void registerEndpoint(String endPoint, std::function<void(MszSwitchWebApiRequestContext*)> handler) override;
-  virtual String getSwitchNameParameter(MszSwitchWebApiRequestContext *context) override;
-  virtual SwitchDataParams getSwitchDataParameters(MszSwitchWebApiRequestContext *context) override;
-  virtual SwitchMetadataParams getSwitchMetadataParameters(MszSwitchWebApiRequestContext *context) override;
-  virtual void sendResponseData(MszSwitchWebApiRequestContext *context, CoreHandlerResponse responseData) override;
+  virtual void handleClient() override;
+  virtual void registerEndpoint(String endPoint, std::function<void()> handler) override;
+  virtual String getSwitchNameParameter() override;
+  virtual SwitchDataParams getSwitchDataParameters() override;
+  virtual SwitchMetadataParams getSwitchMetadataParameters() override;
+  virtual void sendResponseData(CoreHandlerResponse responseData) override;
 };
 
 #endif // SwitchServerEsp8266_h
