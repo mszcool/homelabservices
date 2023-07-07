@@ -1,6 +1,7 @@
 #if defined(ESP8266)
 
 #include <functional>
+#include <bearssl/bearssl.h>
 #include "SwitchServerEsp8266.h"
 
 MszSwitchApiEsp8266::MszSwitchApiEsp8266(int port) : MszSwitchWebApi(port)
@@ -22,6 +23,39 @@ void MszSwitchApiEsp8266::registerEndpoint(String endpoint, std::function<void()
   Serial.println("registerEndpoint - enter");
   server.on(endpoint.c_str(), HTTP_GET, handler);
   Serial.println("registerEndpoint - exit");
+}
+
+String MszSwitchApiEsp8266::getTokenAuthorizationHeader()
+{
+  Serial.println("Getting token authorization header - enter.");
+  String header = server.header("Authorization");
+  Serial.println("Getting token authorization header - exit.");
+  return header;
+}
+
+String MszSwitchApiEsp8266::getTokenSignatureHeader()
+{
+  Serial.println("Getting token signature header - enter.");
+  String header = server.header("Signature");
+  Serial.println("Getting token signature header - exit.");
+  return header;
+}
+
+bool MszSwitchApiEsp8266::validateTokenSignature(String token, String signature, String secretKey)
+{
+  Serial.println("Validating token signature - enter.");
+  // TODO: this requires further work once I have an ESP8266 to test with
+  // String message = token;
+  // uint8_t* hmacKey = (uint8_t*)(secretKey.c_str());
+  // br_hmac_key_context kc;
+  // br_hmac_key_init(&kc, &br_sha256_vtable, hmacKey, strlen(secretKey.c_str()));
+  // br_hmac_context hc;
+  // br_hmac_init(&hc, &kc, 0);
+  // br_hmac_update(&hc, message.c_str(), message.length());
+  // uint8_t result[br_sha256_SIZE];
+  // br_hmac_out(&hc, result);
+  Serial.println("Validating token signature - exit.");
+  return true; //TODO: result;
 }
 
 void MszSwitchApiEsp8266::sendResponseData(CoreHandlerResponse response)

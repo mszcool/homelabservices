@@ -19,6 +19,9 @@ protected:
   virtual void beginServe() override;
   virtual void handleClient() override;
   virtual void registerEndpoint(String endPoint, std::function<void()> handler) override;
+  virtual String getTokenAuthorizationHeader() override;
+  virtual String getTokenSignatureHeader() override;
+  virtual bool validateTokenSignature(String token, String signature, String secretKey) override;
   virtual String getSwitchNameParameter() override;
   virtual SwitchDataParams getSwitchDataParameters() override;
   virtual SwitchMetadataParams getSwitchMetadataParameters() override;

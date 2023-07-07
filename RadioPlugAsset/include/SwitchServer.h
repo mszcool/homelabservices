@@ -45,6 +45,7 @@ protected:
    * The methods below contain the library-specific request handling. They call the corresponding
    * core-methods which are library independent.
    */
+    bool authorize();
     void handleGetInfo();
     void handleSwitchOn();
     void handleSwitchOff();
@@ -55,6 +56,7 @@ protected:
    * The methods below contain the core logic. They are called by the handlers above.
    * These methods are library-independent and can be used for different platforms.
    */
+  bool validateAuthorizationToken(String token, String signature);
   CoreHandlerResponse handleGetInfoCore();
   CoreHandlerResponse handleSwitchOnCore(String switchName);
   CoreHandlerResponse handleSwitchOffCore(String switchName);
@@ -69,6 +71,9 @@ protected:
   virtual void beginServe() = 0;
   virtual void handleClient() = 0;
   virtual void registerEndpoint(String endPoint, std::function<void()> handler) = 0;
+  virtual String getTokenAuthorizationHeader() = 0;
+  virtual String getTokenSignatureHeader() = 0;
+  virtual bool validateTokenSignature(String token, String signature, String secretKey) = 0;
   virtual String getSwitchNameParameter() = 0;
   virtual SwitchDataParams getSwitchDataParameters() = 0;
   virtual SwitchMetadataParams getSwitchMetadataParameters() = 0;
