@@ -13,7 +13,7 @@ const char *API_PARAM_SWITCHNAME = "switchname";
 const char *API_PARAM_SWITCHCOMMAND = "switchcommand";
 const char *API_PARAM_ISTRISTATE = "switchistristate";
 
-const char *HTTP_AUTH_SECRET_NAME = "switchapitoken";
+const int HTTP_AUTH_SECRET_INDEX = 0;
 const int TOKEN_EXPIRATION_SECONDS = 60;
 
 MszSwitchWebApi::MszSwitchWebApi(int port)
@@ -25,8 +25,11 @@ MszSwitchWebApi::MszSwitchWebApi(int port)
  * Main execution functions - begin and loop
  */
 
-void MszSwitchWebApi::begin()
+void MszSwitchWebApi::begin(MszSecretHandler *secretHandler)
 {
+  Serial.println("Configuring Switch API secret handler");
+  this->secretHandler = secretHandler;
+
   Serial.println("Configuring Switch API endpoints");
   this->registerEndpoint(API_ENDPOINT_INFO, std::bind(&MszSwitchWebApi::handleGetInfo, this));
   this->registerEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this));
@@ -56,61 +59,82 @@ void MszSwitchWebApi::loop()
 
 bool MszSwitchWebApi::authorize()
 {
+  bool authZResult = false;
+
   Serial.println("Switch API authorize - enter");
-  String token = this->getTokenAuthorizationHeader();
-  String signature = this->getTokenSignatureHeader();
-  if (token == nullptr || token == "")
+
+  Serial.println("Checking if authorization is enabled...");
+  char *secretResponse = this->secretHandler->getSecret(HTTP_AUTH_SECRET_INDEX);
+  if (secretResponse == NULL)
   {
-    Serial.println("Switch API authorize FAILED NO TOKEN - exit");
-    return false;
+    Serial.println("No Secret found, authorization disabled!");
+    authZResult = true;
   }
   else
   {
-    bool result = this->validateAuthorizationToken(token, signature);
-    Serial.println("Switch API authorize - exit");
-    return result;
+    String token = this->getTokenAuthorizationHeader();
+    String signature = this->getTokenSignatureHeader();
+    if (token == nullptr || token == "" || signature == nullptr || signature == "")
+    {
+      Serial.println("Switch API authorize FAILED NO TOKEN - exit");
+      authZResult = false;
+    }
+    else
+    {
+      authZResult = this->validateAuthorizationToken(token, signature);
+    }
   }
+  Serial.println("Switch API authorize - exit");
+  return authZResult;
 }
 
 void MszSwitchWebApi::handleGetInfo()
 {
   Serial.println("Switch API handleGetInfo - enter");
-  CoreHandlerResponse response = this->handleGetInfoCore();
-  this->sendResponseData(response);
+  performAuthorizedAction([&]()
+                          { return this->handleGetInfoCore(); });
   Serial.println("Switch API handleGetInfo - exit");
 }
 
 void MszSwitchWebApi::handleSwitchOn()
 {
   Serial.println("Switch API handleSwitchOn - enter");
-  String switchName = this->getSwitchNameParameter();
-  CoreHandlerResponse response = this->handleSwitchOnCore(switchName);
-  this->sendResponseData(response);
+  performAuthorizedAction([&]()
+  {
+    String switchName = this->getSwitchNameParameter();
+    return this->handleSwitchOnCore(switchName);
+  });
   Serial.println("Switch API handleSwitchOn - exit");
 }
 
 void MszSwitchWebApi::handleSwitchOff()
 {
   Serial.println("Switch API handleSwitchOff - enter");
-  String switchName = this->getSwitchNameParameter();
-  CoreHandlerResponse response = this->handleSwitchOffCore(switchName);
-  this->sendResponseData(response);
+  performAuthorizedAction([&]()
+  {
+    String switchName = this->getSwitchNameParameter();
+    return this->handleSwitchOffCore(switchName);
+  });
   Serial.println("Switch API handleSwitchOff - exit");
 }
 
 void MszSwitchWebApi::handleUpdateSwitchData()
 {
   Serial.println("Switch API handleUpdateSwitchData - enter");
-  CoreHandlerResponse response = this->handleUpdateSwitchDataCore();
-  this->sendResponseData(response);
+  performAuthorizedAction([&]()
+  {
+    return this->handleUpdateSwitchDataCore();
+  });
   Serial.println("Switch API handleUpdateSwitchData - exit");
 }
 
 void MszSwitchWebApi::handleUpdateMetadata()
 {
   Serial.println("Switch API handleUpdateMetadata - enter");
-  CoreHandlerResponse response = this->handleUpdateMetadataCore();
-  return this->sendResponseData(response);
+  performAuthorizedAction([&]()
+  {
+    return this->handleUpdateMetadataCore();
+  });
   Serial.println("Switch API handleUpdateMetadata - exit");
 }
 
@@ -125,12 +149,11 @@ bool MszSwitchWebApi::validateAuthorizationToken(String token, String signature)
   Serial.println("Switch API validateAuthorizationToken - enter");
 
   // First, get the secret
-  MszSecretHandler secretHandler = MszSecretHandler();
-  String mySecret = secretHandler.getSecret(HTTP_AUTH_SECRET_NAME);
-  if (mySecret == nullptr || mySecret == "")
+  char* mySecret = this->secretHandler->getSecret(HTTP_AUTH_SECRET_INDEX);
+  if (mySecret == NULL)
   {
-    Serial.println("Switch API validateAuthorizationToken FAILED NO SECRET - exit");
-    return false;
+    Serial.println("Switch API validateAuthorizationToken not activate because of empty secret - exit");
+    return true;
   }
 
   // Now, let's use the secret to validate the token
@@ -140,19 +163,28 @@ bool MszSwitchWebApi::validateAuthorizationToken(String token, String signature)
   String tokenBody = token.substring(delimiterPosition + 1);
 
   // TODO: Add timestamp to validation
-  if (this->validateTokenSignature(tokenBody, signature, mySecret))
+  String secretKey = String(mySecret);
+  bool validationResult = this->secretHandler->validateTokenSignature(tokenBody, tokenTimestamp, secretKey, signature, TOKEN_EXPIRATION_SECONDS);
+  Serial.println("Switch API validateAuthorizationToken - exit");
+  return validationResult;
+}
+
+void MszSwitchWebApi::performAuthorizedAction(std::function<CoreHandlerResponse()> action)
+{
+  CoreHandlerResponse response;
+  if (!this->authorize())
   {
-    // The signatures match and the token is not expired, so the request is authorized
-    return true;
+    Serial.println("Switch API - authorization failed");
+    response.statusCode = 401;
+    response.contentType = "text/plain";
+    response.returnContent = "Unauthorized";
+    this->sendResponseData(response);
   }
   else
   {
-    // The signatures do not match or the token is expired, so the request is not authorized
-    return false;
+    response = action();
+    this->sendResponseData(response);
   }
-
-  Serial.println("Switch API validateAuthorizationToken - exit");
-  return true;
 }
 
 CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore()

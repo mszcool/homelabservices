@@ -4,8 +4,6 @@
 #include <sstream>
 #include <iostream>
 #include <functional>
-#include <TimeLib.h>
-#include <mbedtls/md.h>
 #include "SwitchServerEsp32.h"
 
 MszSwitchApiEsp32::MszSwitchApiEsp32(int port)
@@ -42,29 +40,6 @@ String MszSwitchApiEsp32::getTokenSignatureHeader()
     String header = server.header("Signature");
     Serial.println("Getting token signature header - exit.");
     return header;
-}
-
-bool MszSwitchApiEsp32::validateTokenSignature(String token, String signature, String secretKey)
-{
-    Serial.println("Validating token signature - enter.");
-    unsigned char output[32]; // Buffer to hold the HMAC output
-    mbedtls_md_context_t ctx;
-    mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
-
-    const size_t keyLength = strlen(secretKey.c_str());
-    mbedtls_md_init(&ctx);
-    mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
-    mbedtls_md_hmac_starts(&ctx, (unsigned char *)secretKey.c_str(), keyLength);
-    mbedtls_md_hmac_update(&ctx, (unsigned char *)token.c_str(), token.length());
-    mbedtls_md_hmac_finish(&ctx, output);
-    mbedtls_md_free(&ctx);
-
-    char *expectedSignature = (char *)output;
-
-    // TODO: add time stamp to validation == && now() - tokenTimestamp <= TOKEN_EXPIRATION_SECONDS)
-    bool result = (strcmp(signature.c_str(), expectedSignature) == 0); 
-    Serial.println("Validating token signature - exit.");
-    return result;
 }
 
 void MszSwitchApiEsp32::sendResponseData(CoreHandlerResponse response)
