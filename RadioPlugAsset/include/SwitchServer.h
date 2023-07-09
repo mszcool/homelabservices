@@ -42,6 +42,21 @@ public:
   void begin(MszSecretHandler *secretHandler);
   void loop();
 
+  static constexpr const char *API_ENDPOINT_INFO = "/info";
+  static constexpr const char *API_ENDPOINT_ON = "/switchon";
+  static constexpr const char *API_ENDPOINT_OFF = "/switchoff";
+  static constexpr const char *API_ENDPOINT_UPDATESWITCHDATA = "/updateswitchdata";
+  static constexpr const char *API_ENDPOINT_UPDATEINFO = "/updatemetadata";
+
+  static constexpr const char *API_PARAM_SWITCHID = "switchid";
+  static constexpr const char *API_PARAM_SWITCHNAME = "switchname";
+  static constexpr const char *API_PARAM_SWITCHCOMMAND = "switchcommand";
+  static constexpr const char *API_PARAM_ISTRISTATE = "switchistristate";
+
+  static const int HTTP_AUTH_SECRET_ID = 0;
+  static const int TOKEN_EXPIRATION_SECONDS = 60;
+
+
 protected:
   bool logLoopDone = false;
   int serverPort;

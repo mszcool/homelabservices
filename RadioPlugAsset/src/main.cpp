@@ -24,9 +24,6 @@ const char *SECRET_KEY_PARAM_NAME = "secretKeyUx";
 const char *SECRET_KEY_PARAM_DISPLAYNAME = "Secret Key for Authorization (empty = disabled)";
 const char *SECRET_KEY_DEFAULT_VALUE = "yourSecret123!here";
 
-// Todo: put this in a central place.
-const int HTTP_AUTH_SECRET_INDEX = 0;
-
 WiFiManager wifiManager;
 #if defined(ESP32)
 MszSwitchApiEsp32 switchServer(80);
@@ -94,7 +91,7 @@ void setupWifi(MszSecretHandler *secretHandler)
     Serial.println("Saving secret key...");
     if(secretKeyUiParameter.getValueLength() > 0)
     {
-      secretHandler->setSecret(HTTP_AUTH_SECRET_INDEX, secretKeyUiParameter.getValue(), secretKeyUiParameter.getValueLength());
+      secretHandler->setSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, secretKeyUiParameter.getValue(), secretKeyUiParameter.getValueLength());
     }
     Serial.println("Secret key saved!");
   }

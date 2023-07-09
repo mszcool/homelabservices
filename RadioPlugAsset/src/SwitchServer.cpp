@@ -2,20 +2,6 @@
 #include "SecretHandler.h"
 #include <functional>
 
-const char *API_ENDPOINT_INFO = "/info";
-const char *API_ENDPOINT_ON = "/switchon";
-const char *API_ENDPOINT_OFF = "/switchoff";
-const char *API_ENDPOINT_UPDATESWITCHDATA = "/updateswitchdata";
-const char *API_ENDPOINT_UPDATEINFO = "/updatemetadata";
-
-const char *API_PARAM_SWITCHID = "switchid";
-const char *API_PARAM_SWITCHNAME = "switchname";
-const char *API_PARAM_SWITCHCOMMAND = "switchcommand";
-const char *API_PARAM_ISTRISTATE = "switchistristate";
-
-const int HTTP_AUTH_SECRET_INDEX = 0;
-const int TOKEN_EXPIRATION_SECONDS = 60;
-
 MszSwitchWebApi::MszSwitchWebApi(int port)
 {
   this->serverPort = port;
@@ -64,7 +50,7 @@ bool MszSwitchWebApi::authorize()
   Serial.println("Switch API authorize - enter");
 
   Serial.println("Checking if authorization is enabled...");
-  char *secretResponse = this->secretHandler->getSecret(HTTP_AUTH_SECRET_INDEX);
+  char *secretResponse = this->secretHandler->getSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID);
   if (secretResponse == NULL)
   {
     Serial.println("No Secret found, authorization disabled!");
@@ -149,7 +135,7 @@ bool MszSwitchWebApi::validateAuthorizationToken(String token, String signature)
   Serial.println("Switch API validateAuthorizationToken - enter");
 
   // First, get the secret
-  char* mySecret = this->secretHandler->getSecret(HTTP_AUTH_SECRET_INDEX);
+  char* mySecret = this->secretHandler->getSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID);
   if (mySecret == NULL)
   {
     Serial.println("Switch API validateAuthorizationToken not activate because of empty secret - exit");
