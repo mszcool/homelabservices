@@ -150,7 +150,7 @@ bool MszSwitchWebApi::validateAuthorizationToken(String token, String signature)
 
   // TODO: Add timestamp to validation
   String secretKey = String(mySecret);
-  bool validationResult = this->secretHandler->validateTokenSignature(tokenBody, tokenTimestamp, secretKey, signature, TOKEN_EXPIRATION_SECONDS);
+  bool validationResult = this->secretHandler->validateTokenSignature(tokenBody, tokenTimestamp, HTTP_AUTH_SECRET_ID, signature, TOKEN_EXPIRATION_SECONDS);
   Serial.println("Switch API validateAuthorizationToken - exit");
   return validationResult;
 }

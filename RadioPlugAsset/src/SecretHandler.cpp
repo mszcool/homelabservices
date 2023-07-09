@@ -73,9 +73,23 @@ bool MszSecretHandler::setSecret(int index, const char *secret, int secretLength
 
 #if defined(ESP32)
 
-bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp, String secretKey, String signature, int tokenExpirationSeconds)
+bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp, int secretKeyIndex, String signature, int tokenExpirationSeconds)
 {
     Serial.println("Validating token signature - enter.");
+
+    if (secretKeyIndex < 0 || secretKeyIndex > MszSecretHandler::MAX_SECRETS)
+    {
+        Serial.println("Validating token signature failed - INVALID INDEX - exit.");
+        return false;
+    }
+
+    if (this->secrets[secretKeyIndex] == NULL)
+    {
+        Serial.println("Validating token signature failed - NO SECRET - exit.");
+        return false;
+    }
+
+    const char *secretKey = this->secrets[secretKeyIndex];
 
     String tokenTimestampString = String(tokenTimestamp);
 
@@ -83,10 +97,10 @@ bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp,
     mbedtls_md_context_t ctx;
     mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
 
-    const size_t keyLength = strlen(secretKey.c_str());
+    const size_t keyLength = strlen(secretKey);
     mbedtls_md_init(&ctx);
     mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
-    mbedtls_md_hmac_starts(&ctx, (unsigned char *)secretKey.c_str(), keyLength);
+    mbedtls_md_hmac_starts(&ctx, (unsigned char *)secretKey, keyLength);
     mbedtls_md_hmac_update(&ctx, (unsigned char *)token.c_str(), token.length());
     mbedtls_md_hmac_update(&ctx, (unsigned char *)tokenTimestampString.c_str(), tokenTimestampString.length());
     mbedtls_md_hmac_finish(&ctx, output);
@@ -104,7 +118,7 @@ bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp,
 
 #elif defined(ESP8266)
 
-bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp, String secretKey, String signature, int tokenExpirationSeconds)
+bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp, int secretKeyIndex, String signature, int tokenExpirationSeconds)
 {
     Serial.println("Validating token signature - enter.");
     Serial.println("Validating token signature not implemented for ESP8266, yet... always returning true...");

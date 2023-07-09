@@ -21,7 +21,7 @@ public:
   char* getSecret(int index);
   bool setSecret(int index, const char *secret, int secretLength);
 
-  bool validateTokenSignature(String token, long tokenTimestamp, String secretKey, String signature, int tokenExpirationSeconds);
+  bool validateTokenSignature(String token, long tokenTimestamp, int secretKeyIndex, String signature, int tokenExpirationSeconds);
 
 private:
   String toHexString(const uint8_t *input, size_t length);
