@@ -77,7 +77,7 @@ protected:
    * The methods below contain the core logic. They are called by the handlers above.
    * These methods are library-independent and can be used for different platforms.
    */
-  bool validateAuthorizationToken(String token, String signature);
+  bool validateAuthorizationToken(int timestamp, String token, String signature);
   CoreHandlerResponse handleGetInfoCore();
   CoreHandlerResponse handleSwitchOnCore(String switchName);
   CoreHandlerResponse handleSwitchOffCore(String switchName);
@@ -93,8 +93,9 @@ protected:
   virtual void beginServe() = 0;
   virtual void handleClient() = 0;
   virtual void registerEndpoint(String endPoint, std::function<void()> handler) = 0;
-  virtual String getTokenAuthorizationHeader() = 0;
-  virtual String getTokenSignatureHeader() = 0;
+  virtual String getTokenFromAuthorizationHeader() = 0;
+  virtual int getTimestampFromAuthorizationHeader() = 0;
+  virtual String getSignatureFromAuthorizationHeader() = 0;
   virtual String getSwitchNameParameter() = 0;
   virtual SwitchDataParams getSwitchDataParameters() = 0;
   virtual SwitchMetadataParams getSwitchMetadataParameters() = 0;

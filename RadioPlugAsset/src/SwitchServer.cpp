@@ -58,16 +58,19 @@ bool MszSwitchWebApi::authorize()
   }
   else
   {
-    String token = this->getTokenAuthorizationHeader();
-    String signature = this->getTokenSignatureHeader();
-    if (token == nullptr || token == "" || signature == nullptr || signature == "")
+    int timestamp = this->getTimestampFromAuthorizationHeader();
+    String token = this->getTokenFromAuthorizationHeader();
+    String signature = this->getSignatureFromAuthorizationHeader();
+    Serial.println("Switch API authorize - token: " + token);
+    Serial.println("Switch API authorize - signature: " + signature);
+    if (token == nullptr || token == "" || signature == nullptr || signature == "" || timestamp <= 0)
     {
       Serial.println("Switch API authorize FAILED NO TOKEN - exit");
       authZResult = false;
     }
     else
     {
-      authZResult = this->validateAuthorizationToken(token, signature);
+      authZResult = this->validateAuthorizationToken(timestamp, token, signature);
     }
   }
   Serial.println("Switch API authorize - exit");
@@ -86,10 +89,9 @@ void MszSwitchWebApi::handleSwitchOn()
 {
   Serial.println("Switch API handleSwitchOn - enter");
   performAuthorizedAction([&]()
-  {
+                          {
     String switchName = this->getSwitchNameParameter();
-    return this->handleSwitchOnCore(switchName);
-  });
+    return this->handleSwitchOnCore(switchName); });
   Serial.println("Switch API handleSwitchOn - exit");
 }
 
@@ -97,10 +99,9 @@ void MszSwitchWebApi::handleSwitchOff()
 {
   Serial.println("Switch API handleSwitchOff - enter");
   performAuthorizedAction([&]()
-  {
+                          {
     String switchName = this->getSwitchNameParameter();
-    return this->handleSwitchOffCore(switchName);
-  });
+    return this->handleSwitchOffCore(switchName); });
   Serial.println("Switch API handleSwitchOff - exit");
 }
 
@@ -108,9 +109,7 @@ void MszSwitchWebApi::handleUpdateSwitchData()
 {
   Serial.println("Switch API handleUpdateSwitchData - enter");
   performAuthorizedAction([&]()
-  {
-    return this->handleUpdateSwitchDataCore();
-  });
+                          { return this->handleUpdateSwitchDataCore(); });
   Serial.println("Switch API handleUpdateSwitchData - exit");
 }
 
@@ -118,9 +117,7 @@ void MszSwitchWebApi::handleUpdateMetadata()
 {
   Serial.println("Switch API handleUpdateMetadata - enter");
   performAuthorizedAction([&]()
-  {
-    return this->handleUpdateMetadataCore();
-  });
+                          { return this->handleUpdateMetadataCore(); });
   Serial.println("Switch API handleUpdateMetadata - exit");
 }
 
@@ -130,27 +127,20 @@ void MszSwitchWebApi::handleUpdateMetadata()
  * are just wrappers to call these methods next to the concrete implementation methods.
  */
 
-bool MszSwitchWebApi::validateAuthorizationToken(String token, String signature)
+bool MszSwitchWebApi::validateAuthorizationToken(int timestamp, String token, String signature)
 {
   Serial.println("Switch API validateAuthorizationToken - enter");
 
   // First, get the secret
-  char* mySecret = this->secretHandler->getSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID);
+  char *mySecret = this->secretHandler->getSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID);
   if (mySecret == NULL)
   {
     Serial.println("Switch API validateAuthorizationToken not activate because of empty secret - exit");
     return true;
   }
 
-  // Now, let's use the secret to validate the token
-  // Split the token into the timestamp and the rest of the token
-  int delimiterPosition = token.indexOf("|");
-  long tokenTimestamp = token.substring(0, delimiterPosition).toInt();
-  String tokenBody = token.substring(delimiterPosition + 1);
-
-  // TODO: Add timestamp to validation
   String secretKey = String(mySecret);
-  bool validationResult = this->secretHandler->validateTokenSignature(tokenBody, tokenTimestamp, HTTP_AUTH_SECRET_ID, signature, TOKEN_EXPIRATION_SECONDS);
+  bool validationResult = this->secretHandler->validateTokenSignature(token, timestamp, HTTP_AUTH_SECRET_ID, signature, TOKEN_EXPIRATION_SECONDS);
   Serial.println("Switch API validateAuthorizationToken - exit");
   return validationResult;
 }

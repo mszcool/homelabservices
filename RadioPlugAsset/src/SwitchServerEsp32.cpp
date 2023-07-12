@@ -26,20 +26,56 @@ void MszSwitchApiEsp32::registerEndpoint(String endpoint, std::function<void()> 
     server.on(endpoint.c_str(), HTTP_GET, handler);
 }
 
-String MszSwitchApiEsp32::getTokenAuthorizationHeader()
+String MszSwitchApiEsp32::getTokenFromAuthorizationHeader()
 {
-    Serial.println("Getting token authorization header - enter.");
-    String header = server.header("Authorization");
-    Serial.println("Getting token authorization header - exit.");
-    return header;
+    String authHeader = server.header("Authorization");
+    int firstPipe = authHeader.indexOf('|');
+    int secondPipe = authHeader.indexOf('|', firstPipe + 1);
+
+    if (firstPipe == -1 || secondPipe == -1)
+    {
+        // The authorization header does not contain two pipe characters
+        // Return an empty string to indicate an error
+        return "";
+    }
+
+    // The token is the substring between the two pipe characters
+    return authHeader.substring(firstPipe + 1, secondPipe);
 }
 
-String MszSwitchApiEsp32::getTokenSignatureHeader()
+String MszSwitchApiEsp32::getSignatureFromAuthorizationHeader()
 {
-    Serial.println("Getting token signature header - enter.");
-    String header = server.header("Signature");
-    Serial.println("Getting token signature header - exit.");
-    return header;
+    String authHeader = server.header("Authorization");
+    int firstPipe = authHeader.indexOf('|');
+    int secondPipe = authHeader.indexOf('|', firstPipe + 1);
+
+    if (secondPipe == -1)
+    {
+        // The authorization header does not contain two pipe characters
+        // Return an empty string to indicate an error
+        return "";
+    }
+
+    // The signature is the substring after the second pipe character
+    return authHeader.substring(secondPipe + 1);
+}
+
+int MszSwitchApiEsp32::getTimestampFromAuthorizationHeader()
+{
+    String authHeader = server.header("Authorization");
+    int firstPipe = authHeader.indexOf('|');
+
+    if (firstPipe == -1)
+    {
+        // The authorization header does not contain a pipe character
+        // Return 0 to indicate an error
+        return 0;
+    }
+
+    // The timestamp is the substring before the first pipe character
+    String timestampStr = authHeader.substring(0, firstPipe);
+
+    return timestampStr.toInt();
 }
 
 void MszSwitchApiEsp32::sendResponseData(CoreHandlerResponse response)
