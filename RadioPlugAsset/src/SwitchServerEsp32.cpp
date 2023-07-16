@@ -95,11 +95,17 @@ SwitchDataParams MszSwitchApiEsp32::getSwitchDataParameters()
 {
     Serial.println("Getting switch data parameters - enter.");
     SwitchDataParams params;
-    params.switchId = std::stoi(server.arg("id").c_str());
-    params.switchName = server.arg("name");
-    params.switchCommand = server.arg("switchName");
-    std::istringstream conv(server.arg("isTriState").c_str());
-    conv >> std::boolalpha >> params.isTriState;
+
+    // Read the string data from parameters.
+    server.arg("name").toCharArray(params.switchName, MAX_SWITCH_NAME_LENGTH + 1);
+    server.arg("oncommand").toCharArray(params.switchOnCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+    server.arg("offcommand").toCharArray(params.switchOffCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+    
+    // Read types that require conversion from parameters.
+    params.switchProtocol = std::stoi(server.arg("protocol").c_str());
+    std::istringstream convTri(server.arg("isTriState").c_str());
+    convTri >> std::boolalpha >> params.isTriState;
+    
     Serial.println("Getting switch data parameters - exit.");
     return params;
 }
@@ -108,9 +114,8 @@ SwitchMetadataParams MszSwitchApiEsp32::getSwitchMetadataParameters()
 {
     Serial.println("Getting switch metadata parameters - enter.");
     SwitchMetadataParams params;
-    params.sensorName = server.arg("name");
-    params.sensorLocation = server.arg("location");
-    params.token = server.arg("token");
+    server.arg("name").toCharArray(params.sensorName, MAX_SENSOR_NAME_LENGTH + 1);
+    server.arg("location").toCharArray(params.sensorLocation, MAX_SENSOR_LOCATION_LENGTH + 1);
     Serial.println("Getting switch metadata parameters - exit.");
     return params;
 }

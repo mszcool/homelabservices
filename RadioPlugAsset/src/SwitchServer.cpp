@@ -5,6 +5,8 @@
 MszSwitchWebApi::MszSwitchWebApi(int port)
 {
   this->serverPort = port;
+  this->switchSender = RCSwitch();
+  this->switchRepository = MszSwitchRepository();
 }
 
 /*
@@ -23,6 +25,13 @@ void MszSwitchWebApi::begin(MszSecretHandler *secretHandler)
   this->registerEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this));
   this->registerEndpoint(API_ENDPOINT_UPDATEINFO, std::bind(&MszSwitchWebApi::handleUpdateMetadata, this));
   Serial.println("Switch API endpoints configured!");
+
+  Serial.println("Configuring Switch API switch sender");
+  switchSender.enableTransmit(RCSWITCH_DATA_PORT);
+  switchSender.setPulseLength(RCSWITCH_DATA_PULSE_LENGTH);
+  switchSender.setProtocol(RCSWITCH_DATA_PROTOCOL);
+  switchSender.setRepeatTransmit(RCSWITCH_REPEAT_TRANSMIT);
+  Serial.println("Switch API switch sender configured!");
 
   Serial.println("Starting Switch API...");
   this->beginServe();
@@ -109,7 +118,9 @@ void MszSwitchWebApi::handleUpdateSwitchData()
 {
   Serial.println("Switch API handleUpdateSwitchData - enter");
   performAuthorizedAction([&]()
-                          { return this->handleUpdateSwitchDataCore(); });
+                          {
+                            SwitchDataParams switchParams = this->getSwitchDataParameters(); 
+                            return this->handleUpdateSwitchDataCore(switchParams); });
   Serial.println("Switch API handleUpdateSwitchData - exit");
 }
 
@@ -117,7 +128,9 @@ void MszSwitchWebApi::handleUpdateMetadata()
 {
   Serial.println("Switch API handleUpdateMetadata - enter");
   performAuthorizedAction([&]()
-                          { return this->handleUpdateMetadataCore(); });
+                          { 
+                            SwitchMetadataParams metadataParams = this->getSwitchMetadataParameters();
+                            return this->handleUpdateMetadataCore(metadataParams); });
   Serial.println("Switch API handleUpdateMetadata - exit");
 }
 
@@ -151,8 +164,8 @@ void MszSwitchWebApi::performAuthorizedAction(std::function<CoreHandlerResponse(
   if (!this->authorize())
   {
     Serial.println("Switch API - authorization failed");
-    response.statusCode = 401;
-    response.contentType = "text/plain";
+    response.statusCode = HTTP_UNAUTHORIZED_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
     response.returnContent = "Unauthorized";
     this->sendResponseData(response);
   }
@@ -165,45 +178,120 @@ void MszSwitchWebApi::performAuthorizedAction(std::function<CoreHandlerResponse(
 
 CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore()
 {
+  SwitchMetadataParams metadata = this->switchRepository.loadMetadata();
+
   CoreHandlerResponse response;
-  response.statusCode = 200;
-  response.contentType = "text/plain";
-  response.returnContent = "Switch API is running";
+  response.statusCode = HTTP_OK_CODE;
+  response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+  response.returnContent = "status=running";
+  response.returnContent += "\n\r";
+  response.returnContent += "sensorName=" + String(metadata.sensorName);
+  response.returnContent += "\n\r";
+  response.returnContent += "sensorLocation=" + String(metadata.sensorLocation);
+
   return response;
 }
 
 CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore(String switchName)
 {
+  Serial.println("Switch API handleSwitchOnCore - enter");
+
   CoreHandlerResponse response;
-  response.statusCode = 200;
-  response.contentType = "text/plain";
-  response.returnContent = "Switch " + switchName + " is now ON";
+  SwitchDataParams switchData = this->switchRepository.loadSwitchData(switchName);
+  if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
+  {
+    Serial.println("Switch API handleSwitchOnCore - switch not found");
+
+    response.statusCode = HTTP_NOT_FOUND_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch " + switchName + " cannot be found!";
+  }
+  else
+  {
+    Serial.println("Switch should be ON, by now!");
+
+    switchSender.setProtocol(switchData.switchProtocol);
+    if (switchData.isTriState)
+    {
+      switchSender.sendTriState(switchData.switchOnCommand);
+    }
+    else
+    {
+      switchSender.send(switchData.switchOnCommand);
+    }
+
+    Serial.println("Preparing response data...");
+    response.statusCode = HTTP_OK_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch " + switchName + " is now ON";
+  }
+
+  Serial.println("Switch API handleSwitchOnCore - exit");
   return response;
 }
 
 CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore(String switchName)
 {
+  Serial.println("Switch API handleSwitchOffCore - enter");
+
   CoreHandlerResponse response;
-  response.statusCode = 200;
-  response.contentType = "text/plain";
-  response.returnContent = "Switch " + switchName + " is now OFF";
+  SwitchDataParams switchData = this->switchRepository.loadSwitchData(switchName);
+  if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
+  {
+    Serial.println("Switch API handleSwitchOffCore - switch not found");
+
+    response.statusCode = HTTP_NOT_FOUND_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch " + switchName + " cannot be found!";
+  }
+  else
+  {
+    Serial.println("Switch should be OFF, by now!");
+
+    switchSender.setProtocol(switchData.switchProtocol);
+    if (switchData.isTriState)
+    {
+      switchSender.sendTriState(switchData.switchOffCommand);
+    }
+    else
+    {
+      switchSender.send(switchData.switchOffCommand);
+    }
+
+    Serial.println("Preparing response data...");
+    response.statusCode = HTTP_OK_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch " + switchName + " is now OFF";
+  }
+
+  Serial.println("Switch API handleSwitchOffCore - exit");
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore()
+CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore(SwitchDataParams switchData)
 {
+  Serial.println("Switch API handleUpdateSwitchDataCore - enter");
+  bool succeeded = this->switchRepository.saveSwitchData(switchData.switchName, switchData);
+
   CoreHandlerResponse response;
-  response.statusCode = 200;
-  response.contentType = "text/plain";
-  response.returnContent = "Updating switch metadata...";
+  response.statusCode = (succeeded ? HTTP_OK_CODE : HTTP_INTERNAL_SERVER_ERROR_CODE);
+  response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+  response.returnContent = (succeeded ? "Switch data updated" : "Switch data update failed");
+
+  Serial.println("Switch API handleUpdateSwitchDataCore - exit");
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleUpdateMetadataCore()
+CoreHandlerResponse MszSwitchWebApi::handleUpdateMetadataCore(SwitchMetadataParams metadata)
 {
+  Serial.println("Switch API handleUpdateMetadataCore - enter");
+  bool succeeded = this->switchRepository.saveMetadata(metadata);
+
   CoreHandlerResponse response;
-  response.statusCode = 200;
-  response.contentType = "text/plain";
-  response.returnContent = "Updating general metadata...";
+  response.statusCode = (succeeded ? HTTP_OK_CODE : HTTP_INTERNAL_SERVER_ERROR_CODE);
+  response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+  response.returnContent = (succeeded ? "Metadata updated" : "Metadata update failed");
+
+  Serial.println("Switch API handleUpdateMetadataCore - exit");
   return response;
 }

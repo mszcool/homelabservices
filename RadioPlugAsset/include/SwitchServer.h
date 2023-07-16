@@ -2,7 +2,18 @@
 #define MSZ_SWITCHSERVER_H
 
 #include <Arduino.h>
+#include <RCSwitch.h>
+#include "SwitchData.h"
 #include "SecretHandler.h"
+#include "SwitchRepository.h"
+
+#define HTTP_OK_CODE 200
+#define HTTP_BAD_REQUEST_CODE 400
+#define HTTP_UNAUTHORIZED_CODE 401
+#define HTTP_NOT_FOUND_CODE 404
+#define HTTP_INTERNAL_SERVER_ERROR_CODE 500
+#define HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN "text/plain"
+#define HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON "application/json"
 
 /// @brief Response struct for the core handler methods.
 /// @details This struct encapsulates the responses the returned by the core methods for the library specific methods.
@@ -11,25 +22,6 @@ struct CoreHandlerResponse
   int statusCode;
   String contentType;
   String returnContent;
-};
-
-/// @brief Defines the parameters for the Switch
-/// @details Defines a unique ID for the switch such that the config can be updated, a name, and the command. If isTriState is true, the command is a Tristate while if false, it is a decimal.
-struct SwitchDataParams
-{
-  bool isTriState;
-  int switchId;
-  String switchName;
-  String switchCommand;
-};
-
-/// @brief Defines the parameters for the metadata
-/// @details Defines a token used for securing content, sensor name, and sensor location.
-struct SwitchMetadataParams
-{
-  String token;
-  String sensorName;
-  String sensorLocation;
 };
 
 /// @class MszSwitchWebApi
@@ -56,10 +48,21 @@ public:
   static const int HTTP_AUTH_SECRET_ID = 0;
   static const int TOKEN_EXPIRATION_SECONDS = 60;
 
+  static const int RCSWITCH_DATA_PORT = 23;
+  static const int RCSWITCH_DATA_PULSE_LENGTH = 512;
+  static const int RCSWITCH_DATA_PROTOCOL = 5;
+  static const int RCSWITCH_REPEAT_TRANSMIT = 10;
+  static const int RCSWITCH_BIT_LENGTH = 24;
+
 
 protected:
   bool logLoopDone = false;
   int serverPort;
+
+  RCSwitch switchSender;
+  MszSwitchRepository switchRepository;
+
+  // Passed in as a pointer as created outside of the scope of an instance of this class.
   MszSecretHandler *secretHandler;
 
   /*
@@ -81,8 +84,8 @@ protected:
   CoreHandlerResponse handleGetInfoCore();
   CoreHandlerResponse handleSwitchOnCore(String switchName);
   CoreHandlerResponse handleSwitchOffCore(String switchName);
-  CoreHandlerResponse handleUpdateSwitchDataCore();
-  CoreHandlerResponse handleUpdateMetadataCore();
+  CoreHandlerResponse handleUpdateSwitchDataCore(SwitchDataParams switchParams);
+  CoreHandlerResponse handleUpdateMetadataCore(SwitchMetadataParams metadataParams);
   void performAuthorizedAction(std::function<CoreHandlerResponse()> action);
 
   /*

@@ -93,10 +93,10 @@ SwitchDataParams MszSwitchApiEsp8266::getSwitchDataParameters()
 {
   Serial.println("Getting switch data parameters - enter.");
   SwitchDataParams params;
-  // params.switchId = server.arg("id");
-  //  params.isTriState = server.arg("isTriState");
-  params.switchName = server.arg("name");
-  params.switchCommand = server.arg("switchName");
+  // TODO: populate once having an ESP8266 as test device.
+  // params.isTriState = false;
+  // params.switchCommand = server.arg("command");
+  // params.switchName = server.arg("name");
   Serial.println("Getting switch data parameters - exit.");
   return params;
 }
@@ -105,10 +105,10 @@ SwitchMetadataParams MszSwitchApiEsp8266::getSwitchMetadataParameters()
 {
   Serial.println("Getting switch metadata parameters - enter.");
   SwitchMetadataParams params;
+  // TODO: populate once having an ESP8266 as test device.
   // params.switchId = server.arg("id");
-  params.sensorName = server.arg("name");
-  params.sensorLocation = server.arg("location");
-  params.token = server.arg("token");
+  // params.sensorName = server.arg("name");
+  // params.sensorLocation = server.arg("location");
   Serial.println("Getting switch metadata parameters - exit.");
   return params;
 }

@@ -35,3 +35,15 @@ response = requests.get(url, headers=headers)
 
 print("Response status code:", response.status_code)
 print("Response body:", response.text)
+
+# Wait for the server to process the request
+delay = 20
+print("Waiting for", delay, "seconds...")
+time.sleep(delay)
+
+# Now, turn the switch off, again
+url = 'http://192.168.99.42/switchoff'
+response = requests.get(url, headers=headers)
+
+print("Response status code:", response.status_code)
+print("Response body:", response.text)
