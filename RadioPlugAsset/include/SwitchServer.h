@@ -60,7 +60,6 @@ protected:
   int serverPort;
 
   RCSwitch switchSender;
-  MszSwitchRepository switchRepository;
 
   // Passed in as a pointer as created outside of the scope of an instance of this class.
   MszSecretHandler *secretHandler;

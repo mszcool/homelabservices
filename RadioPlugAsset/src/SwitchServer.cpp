@@ -3,10 +3,9 @@
 #include <functional>
 
 MszSwitchWebApi::MszSwitchWebApi(int port)
+  : switchSender()
 {
   this->serverPort = port;
-  this->switchSender = RCSwitch();
-  this->switchRepository = MszSwitchRepository();
 }
 
 /*
@@ -17,6 +16,8 @@ void MszSwitchWebApi::begin(MszSecretHandler *secretHandler)
 {
   Serial.println("Configuring Switch API secret handler");
   this->secretHandler = secretHandler;
+
+  Serial.println("Creating RCSwitch() and MszSwitchRepository()...");
 
   Serial.println("Configuring Switch API endpoints");
   this->registerEndpoint(API_ENDPOINT_INFO, std::bind(&MszSwitchWebApi::handleGetInfo, this));
@@ -178,7 +179,8 @@ void MszSwitchWebApi::performAuthorizedAction(std::function<CoreHandlerResponse(
 
 CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore()
 {
-  SwitchMetadataParams metadata = this->switchRepository.loadMetadata();
+  MszSwitchRepository switchRepository;
+  SwitchMetadataParams metadata = switchRepository.loadMetadata();
 
   CoreHandlerResponse response;
   response.statusCode = HTTP_OK_CODE;
@@ -196,8 +198,9 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore(String switchName)
 {
   Serial.println("Switch API handleSwitchOnCore - enter");
 
+  MszSwitchRepository switchRepository;
   CoreHandlerResponse response;
-  SwitchDataParams switchData = this->switchRepository.loadSwitchData(switchName);
+  SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
   if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
   {
     Serial.println("Switch API handleSwitchOnCore - switch not found");
@@ -234,8 +237,9 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore(String switchName)
 {
   Serial.println("Switch API handleSwitchOffCore - enter");
 
+  MszSwitchRepository switchRepository;
   CoreHandlerResponse response;
-  SwitchDataParams switchData = this->switchRepository.loadSwitchData(switchName);
+  SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
   if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
   {
     Serial.println("Switch API handleSwitchOffCore - switch not found");
@@ -271,7 +275,9 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore(String switchName)
 CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore(SwitchDataParams switchData)
 {
   Serial.println("Switch API handleUpdateSwitchDataCore - enter");
-  bool succeeded = this->switchRepository.saveSwitchData(switchData.switchName, switchData);
+
+  MszSwitchRepository switchRepository;
+  bool succeeded = switchRepository.saveSwitchData(switchData.switchName, switchData);
 
   CoreHandlerResponse response;
   response.statusCode = (succeeded ? HTTP_OK_CODE : HTTP_INTERNAL_SERVER_ERROR_CODE);
@@ -285,7 +291,9 @@ CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore(SwitchDataParams
 CoreHandlerResponse MszSwitchWebApi::handleUpdateMetadataCore(SwitchMetadataParams metadata)
 {
   Serial.println("Switch API handleUpdateMetadataCore - enter");
-  bool succeeded = this->switchRepository.saveMetadata(metadata);
+
+  MszSwitchRepository switchRepository;
+  bool succeeded = switchRepository.saveMetadata(metadata);
 
   CoreHandlerResponse response;
   response.statusCode = (succeeded ? HTTP_OK_CODE : HTTP_INTERNAL_SERVER_ERROR_CODE);
