@@ -49,8 +49,6 @@ char* MszSecretHandler::getSecret(int index)
         return NULL;
     }
    
-    Serial.println("Secret index:");
-    Serial.println(index);
     if (this->secrets[index] != NULL)
     {
         Serial.println("Secret exists, reading in Arduino String.");
