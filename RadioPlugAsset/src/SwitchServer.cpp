@@ -1,9 +1,12 @@
+#include <functional>
+#include <sstream>
+#include <iomanip>
+
 #include "SwitchServer.h"
 #include "SecretHandler.h"
-#include <functional>
 
 MszSwitchWebApi::MszSwitchWebApi(int port)
-  : switchSender()
+    : switchSender()
 {
   this->serverPort = port;
 }
@@ -68,21 +71,49 @@ bool MszSwitchWebApi::authorize()
   }
   else
   {
-    int timestamp = this->getTimestampFromAuthorizationHeader();
-    String token = this->getTokenFromAuthorizationHeader();
-    String signature = this->getSignatureFromAuthorizationHeader();
-    Serial.println("Switch API authorize - token: " + token);
-    Serial.println("Switch API authorize - signature: " + signature);
-    if (token == nullptr || token == "" || signature == nullptr || signature == "" || timestamp <= 0)
+    String authHeader = this->getHttpHeader(MszSwitchWebApi::HEADER_AUTHORIZATION);
+    int firstPipe = authHeader.indexOf('|');
+    int secondPipe = authHeader.indexOf('|', firstPipe + 1);
+
+    if (firstPipe == -1 || secondPipe == -1)
     {
-      Serial.println("Switch API authorize FAILED NO TOKEN - exit");
+      // The authorization header does not contain two pipe characters
+      // Return an empty string to indicate an error
+      Serial.println("Switch API authorize FAILED - Invalid authorization token format - exit");
       authZResult = false;
     }
     else
     {
-      authZResult = this->validateAuthorizationToken(timestamp, token, signature);
+      // The timestamp is the substring before the first pipe character
+      String timestampStr = authHeader.substring(0, firstPipe);
+      String token = authHeader.substring(firstPipe + 1, secondPipe);
+      String signature = authHeader.substring(secondPipe + 1);
+      Serial.println("Switch API authorize - token: " + token);
+      Serial.println("Switch API authorize - signature: " + signature);
+      if (token == nullptr || token == "" || signature == nullptr || signature == "" || timestampStr == nullptr || timestampStr == "")
+      {
+        Serial.println("Switch API authorize FAILED NO TOKEN - exit");
+        authZResult = false;
+      }
+      else
+      {
+        // First, convert the timestamp to an int, if possible
+        int timestamp = 0;
+        std::istringstream issTimeStamp(timestampStr.c_str());
+        issTimeStamp >> std::noskipws >> timestamp;
+        if (issTimeStamp.eof() || !issTimeStamp.fail())
+        {
+          authZResult = this->validateAuthorizationToken(timestamp, token, signature);
+        }
+        else
+        {
+          Serial.println("Switch API authorize FAILED - Invalid timestamp - exit");
+          authZResult = false;
+        }
+      }
     }
   }
+
   Serial.println("Switch API authorize - exit");
   return authZResult;
 }
@@ -99,9 +130,7 @@ void MszSwitchWebApi::handleSwitchOn()
 {
   Serial.println("Switch API handleSwitchOn - enter");
   performAuthorizedAction([&]()
-                          {
-    String switchName = this->getSwitchNameParameter();
-    return this->handleSwitchOnCore(switchName); });
+                          { return this->handleSwitchOnCore(); });
   Serial.println("Switch API handleSwitchOn - exit");
 }
 
@@ -109,9 +138,7 @@ void MszSwitchWebApi::handleSwitchOff()
 {
   Serial.println("Switch API handleSwitchOff - enter");
   performAuthorizedAction([&]()
-                          {
-    String switchName = this->getSwitchNameParameter();
-    return this->handleSwitchOffCore(switchName); });
+                          { return this->handleSwitchOffCore(); });
   Serial.println("Switch API handleSwitchOff - exit");
 }
 
@@ -119,9 +146,7 @@ void MszSwitchWebApi::handleUpdateSwitchData()
 {
   Serial.println("Switch API handleUpdateSwitchData - enter");
   performAuthorizedAction([&]()
-                          {
-                            SwitchDataParams switchParams = this->getSwitchDataParameters(); 
-                            return this->handleUpdateSwitchDataCore(switchParams); });
+                          { return this->handleUpdateSwitchDataCore(); });
   Serial.println("Switch API handleUpdateSwitchData - exit");
 }
 
@@ -129,16 +154,95 @@ void MszSwitchWebApi::handleUpdateMetadata()
 {
   Serial.println("Switch API handleUpdateMetadata - enter");
   performAuthorizedAction([&]()
-                          { 
-                            SwitchMetadataParams metadataParams = this->getSwitchMetadataParameters();
-                            return this->handleUpdateMetadataCore(metadataParams); });
+                          { return this->handleUpdateMetadataCore(); });
   Serial.println("Switch API handleUpdateMetadata - exit");
 }
 
 /*
- * Core handler methods with execution logic for web API requests.
- * These methods contain the main business logic, while the handlers above
- * are just wrappers to call these methods next to the concrete implementation methods.
+ * Parameter handling functions where needed.
+ */
+
+bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
+{
+  Serial.println("Getting switch data parameters - enter.");
+  SwitchDataParams params;
+
+  // Read the string data from parameters.
+  String paramSwitchName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SWITCH_NAME);
+  String paramCommandOn = this->getQueryStringParam(MszSwitchWebApi::PARAM_COMMAND_ON);
+  String paramCommandOff = this->getQueryStringParam(MszSwitchWebApi::PARAM_COMMAND_OFF);
+  String paramProtocol = this->getQueryStringParam(MszSwitchWebApi::PARAM_PROTOCOL);
+  String paramIsTriState = this->getQueryStringParam(MszSwitchWebApi::PARAM_IS_TRISTATE);
+
+  if (paramSwitchName == nullptr || paramCommandOn == nullptr || paramCommandOff == nullptr || paramProtocol == nullptr || paramIsTriState == nullptr)
+  {
+    Serial.println("Getting switch data parameters - failed - exit.");
+    return false;
+  }
+
+  if (paramSwitchName == "" || paramCommandOn == "" || paramCommandOff == "" || paramProtocol == "" || paramIsTriState == "")
+  {
+    Serial.println("Getting switch data parameters - failed - exit.");
+    return false;
+  }
+
+  // Move the items into the structure
+  paramSwitchName.toCharArray(params.switchName, MAX_SWITCH_NAME_LENGTH + 1);
+  paramCommandOn.toCharArray(params.switchOnCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+  paramCommandOff.toCharArray(params.switchOffCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+
+  // Read types that require conversion from parameters - protocol.
+  std::istringstream convProto(paramProtocol.c_str());
+  convProto >> std::noskipws >> params.switchProtocol;
+  if (convProto.fail())
+  {
+    Serial.println("Getting switch data parameters - failed - exit.");
+    return false;
+  }
+
+  // Read types that require conversion from parameters - isTriState.
+  std::istringstream convTri(paramIsTriState.c_str());
+  convTri >> std::boolalpha >> params.isTriState;
+  if (convTri.fail())
+  {
+    Serial.println("Getting switch data parameters - failed - exit.");
+    return false;
+  }
+
+  Serial.println("Getting switch data parameters - exit.");
+  return true;
+}
+
+bool MszSwitchWebApi::getMetadataParams(SwitchMetadataParams &metadataParams)
+{
+  Serial.println("Getting switch metadata parameters - enter.");
+
+  // Read the string data from parameters.
+  String paramSensorName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SENSOR_NAME);
+  String paramSensorLocation = this->getQueryStringParam(MszSwitchWebApi::PARAM_SENSOR_LOCATION);
+
+  if (paramSensorName == nullptr || paramSensorLocation == nullptr)
+  {
+    Serial.println("Getting switch metadata parameters - failed - exit.");
+    return false;
+  }
+
+  if (paramSensorName == "" || paramSensorLocation == "")
+  {
+    Serial.println("Getting switch metadata parameters - failed - exit.");
+    return false;
+  }
+
+  // Now copy data into the structure
+  paramSensorName.toCharArray(metadataParams.sensorName, MAX_SENSOR_NAME_LENGTH + 1);
+  paramSensorLocation.toCharArray(metadataParams.sensorLocation, MAX_SENSOR_LOCATION_LENGTH + 1);
+
+  Serial.println("Getting switch metadata parameters - exit.");
+  return true;
+}
+
+/*
+ * Authorization related functions, implementation
  */
 
 bool MszSwitchWebApi::validateAuthorizationToken(int timestamp, String token, String signature)
@@ -177,6 +281,12 @@ void MszSwitchWebApi::performAuthorizedAction(std::function<CoreHandlerResponse(
   }
 }
 
+/*
+ * Core handler methods with execution logic for web API requests.
+ * These methods contain the main business logic, while the handlers above
+ * are just wrappers to call these methods next to the concrete implementation methods.
+ */
+
 CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore()
 {
   MszSwitchRepository switchRepository;
@@ -194,10 +304,26 @@ CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore()
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore(String switchName)
+CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore()
 {
   Serial.println("Switch API handleSwitchOnCore - enter");
 
+  // Get and validate the parameters
+  String switchName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SWITCH_NAME);
+  if ((switchName == nullptr) || (switchName == "") || (switchName.length() > MAX_SWITCH_NAME_LENGTH))
+  {
+    Serial.println("Switch API handleSwitchOnCore - switch name not found");
+
+    CoreHandlerResponse response;
+    response.statusCode = HTTP_BAD_REQUEST_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch name not found!";
+
+    Serial.println("Switch API handleSwitchOnCore - exit");
+    return response;
+  }
+
+  // If validation succeeded, let's executed the business logic.
   MszSwitchRepository switchRepository;
   CoreHandlerResponse response;
   SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
@@ -233,10 +359,26 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore(String switchName)
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore(String switchName)
+CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore()
 {
   Serial.println("Switch API handleSwitchOffCore - enter");
 
+  // Get and validate the parameters.
+  String switchName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SWITCH_NAME);
+  if ((switchName == nullptr) || (switchName == "") || (switchName.length() > MAX_SWITCH_NAME_LENGTH))
+  {
+    Serial.println("Switch API handleSwitchOnCore - switch name missing");
+
+    CoreHandlerResponse response;
+    response.statusCode = HTTP_BAD_REQUEST_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch name missing!";
+
+    Serial.println("Switch API handleSwitchOffCore - exit");
+    return response;
+  }
+
+  // Now execute the core logic.
   MszSwitchRepository switchRepository;
   CoreHandlerResponse response;
   SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
@@ -272,10 +414,26 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore(String switchName)
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore(SwitchDataParams switchData)
+CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore()
 {
   Serial.println("Switch API handleUpdateSwitchDataCore - enter");
 
+  // First, get the switch parameters from the request.
+  SwitchDataParams switchData;
+  if (!(this->getSwitchDataParams(switchData)))
+  {
+    Serial.println("Switch API handleUpdateSwitchDataCore - switch data invalid");
+
+    CoreHandlerResponse response;
+    response.statusCode = HTTP_BAD_REQUEST_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Switch data invalid!";
+
+    Serial.println("Switch API handleUpdateSwitchDataCore - exit");
+    return response;
+  }
+
+  // If all parameters are validated, execute the core logic.
   MszSwitchRepository switchRepository;
   bool succeeded = switchRepository.saveSwitchData(switchData.switchName, switchData);
 
@@ -288,10 +446,26 @@ CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore(SwitchDataParams
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleUpdateMetadataCore(SwitchMetadataParams metadata)
+CoreHandlerResponse MszSwitchWebApi::handleUpdateMetadataCore()
 {
   Serial.println("Switch API handleUpdateMetadataCore - enter");
 
+  // First get the data and validate it.
+  SwitchMetadataParams metadata;
+  if (!(this->getMetadataParams(metadata)))
+  {
+    Serial.println("Switch API handleUpdateMetadataCore - metadata invalid");
+
+    CoreHandlerResponse response;
+    response.statusCode = HTTP_BAD_REQUEST_CODE;
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+    response.returnContent = "Metadata invalid!";
+
+    Serial.println("Switch API handleUpdateMetadataCore - exit");
+    return response;
+  }
+
+  // Once validation succeeded, execute the request.
   MszSwitchRepository switchRepository;
   bool succeeded = switchRepository.saveMetadata(metadata);
 

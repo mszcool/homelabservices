@@ -45,6 +45,15 @@ public:
   static constexpr const char *API_PARAM_SWITCHCOMMAND = "switchcommand";
   static constexpr const char *API_PARAM_ISTRISTATE = "switchistristate";
 
+  static constexpr const char *HEADER_AUTHORIZATION = "Authorization";
+  static constexpr const char *PARAM_SENSOR_NAME = "name";
+  static constexpr const char *PARAM_SENSOR_LOCATION = "location";
+  static constexpr const char *PARAM_SWITCH_NAME = "name";
+  static constexpr const char *PARAM_COMMAND_ON = "oncommand";
+  static constexpr const char *PARAM_COMMAND_OFF = "offcommand";
+  static constexpr const char *PARAM_IS_TRISTATE = "istristate";
+  static constexpr const char *PARAM_PROTOCOL = "protocol";
+
   static const int HTTP_AUTH_SECRET_ID = 0;
   static const int TOKEN_EXPIRATION_SECONDS = 60;
 
@@ -76,31 +85,35 @@ protected:
   void handleUpdateMetadata();
 
   /*
+   * Authorization releated functions
+   */
+  void performAuthorizedAction(std::function<CoreHandlerResponse()> action);
+  bool validateAuthorizationToken(int timestamp, String token, String signature);
+
+  /*
+   * Parameter-retrieval related functions (where needed).
+   */
+  bool getSwitchDataParams(SwitchDataParams& switchParams);
+  bool getMetadataParams(SwitchMetadataParams& metadataParams);
+
+  /*
    * The methods below contain the core logic. They are called by the handlers above.
    * These methods are library-independent and can be used for different platforms.
    */
-  bool validateAuthorizationToken(int timestamp, String token, String signature);
   CoreHandlerResponse handleGetInfoCore();
-  CoreHandlerResponse handleSwitchOnCore(String switchName);
-  CoreHandlerResponse handleSwitchOffCore(String switchName);
-  CoreHandlerResponse handleUpdateSwitchDataCore(SwitchDataParams switchParams);
-  CoreHandlerResponse handleUpdateMetadataCore(SwitchMetadataParams metadataParams);
-  void performAuthorizedAction(std::function<CoreHandlerResponse()> action);
+  CoreHandlerResponse handleSwitchOnCore();
+  CoreHandlerResponse handleSwitchOffCore();
+  CoreHandlerResponse handleUpdateSwitchDataCore();
+  CoreHandlerResponse handleUpdateMetadataCore();
 
   /*
    * These are the methods that need to be provided by each, library specific implementation.
    */
-
-  /// @brief Defines a template for a context parameter specific to the library.
   virtual void beginServe() = 0;
   virtual void handleClient() = 0;
   virtual void registerEndpoint(String endPoint, std::function<void()> handler) = 0;
-  virtual String getTokenFromAuthorizationHeader() = 0;
-  virtual int getTimestampFromAuthorizationHeader() = 0;
-  virtual String getSignatureFromAuthorizationHeader() = 0;
-  virtual String getSwitchNameParameter() = 0;
-  virtual SwitchDataParams getSwitchDataParameters() = 0;
-  virtual SwitchMetadataParams getSwitchMetadataParameters() = 0;
+  virtual String getQueryStringParam(String paramName) = 0;
+  virtual String getHttpHeader(String headerName) = 0;
   virtual void sendResponseData(CoreHandlerResponse responseData) = 0;
 };
 

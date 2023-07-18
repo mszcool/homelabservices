@@ -19,12 +19,8 @@ protected:
   virtual void beginServe() override;
   virtual void handleClient() override;
   virtual void registerEndpoint(String endPoint, std::function<void()> handler) override;
-  virtual String getTokenFromAuthorizationHeader() override;
-  virtual int getTimestampFromAuthorizationHeader() override;
-  virtual String getSignatureFromAuthorizationHeader() override;
-  virtual String getSwitchNameParameter() override;
-  virtual SwitchDataParams getSwitchDataParameters() override;
-  virtual SwitchMetadataParams getSwitchMetadataParameters() override;
+  virtual String getQueryStringParam(String paramName) override;
+  virtual String getHttpHeader(String headerName) override;
   virtual void sendResponseData(CoreHandlerResponse responseData) override;
 };
 
