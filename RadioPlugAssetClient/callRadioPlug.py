@@ -25,7 +25,10 @@ def create_hmac_signature(secret_key, token, token_timestamp_str):
 #
 def call_endpoint(switch_ip, headers, operation, queryStr):
     netloc = switch_ip
-    path = '/{}?{}'.format(operation, urlencode(queryStr))
+    print("[Call Endpoint] Netloc:", netloc)
+    print("[Call Endpoint] Operation:", operation)
+    print("[Call Endpoint] Query string:", queryStr)
+    path = '/{}?{}'.format(operation, queryStr)
     finalUrl = urlunparse(('http', netloc, path, '', '', ''))
     response = requests.get(finalUrl, headers=headers)
     return response
@@ -142,7 +145,7 @@ def main():
     parser_registerswitch.add_argument('--oncommand', required=True)
     parser_registerswitch.add_argument('--offcommand', required=True)
     parser_registerswitch.add_argument('--protocol', required=True, choices=[1, 2, 3, 4, 5], type=int)
-    parser_registerswitch.add_argument('--istristate', required=True, type=bool)
+    parser_registerswitch.add_argument('--istristate', required=True)
 
     # Create the parser for the "switch" command
     parser_switch = subparsers.add_parser('switch')

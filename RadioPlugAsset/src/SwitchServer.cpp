@@ -176,13 +176,13 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
 
   if (paramSwitchName == nullptr || paramCommandOn == nullptr || paramCommandOff == nullptr || paramProtocol == nullptr || paramIsTriState == nullptr)
   {
-    Serial.println("Getting switch data parameters - failed - exit.");
+    Serial.println("Getting switch data parameters - missing parameters - exit.");
     return false;
   }
 
   if (paramSwitchName == "" || paramCommandOn == "" || paramCommandOff == "" || paramProtocol == "" || paramIsTriState == "")
   {
-    Serial.println("Getting switch data parameters - failed - exit.");
+    Serial.println("Getting switch data parameters - missing parameters - exit.");
     return false;
   }
 
@@ -196,7 +196,7 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
   convProto >> std::noskipws >> params.switchProtocol;
   if (convProto.fail())
   {
-    Serial.println("Getting switch data parameters - failed - exit.");
+    Serial.println("Getting switch data parameters - convert protocol failed - exit.");
     return false;
   }
 
@@ -205,7 +205,7 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
   convTri >> std::boolalpha >> params.isTriState;
   if (convTri.fail())
   {
-    Serial.println("Getting switch data parameters - failed - exit.");
+    Serial.println("Getting switch data parameters - convert Tristate failed - exit.");
     return false;
   }
 
