@@ -101,8 +101,7 @@ protected:
    * These methods are library-independent and can be used for different platforms.
    */
   CoreHandlerResponse handleGetInfoCore();
-  CoreHandlerResponse handleSwitchOnCore();
-  CoreHandlerResponse handleSwitchOffCore();
+  CoreHandlerResponse handleSwitchOnOffCore(bool switchItOn);
   CoreHandlerResponse handleUpdateSwitchDataCore();
   CoreHandlerResponse handleUpdateMetadataCore();
 

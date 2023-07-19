@@ -130,7 +130,7 @@ void MszSwitchWebApi::handleSwitchOn()
 {
   Serial.println("Switch API handleSwitchOn - enter");
   performAuthorizedAction([&]()
-                          { return this->handleSwitchOnCore(); });
+                          { return this->handleSwitchOnOffCore(true); });
   Serial.println("Switch API handleSwitchOn - exit");
 }
 
@@ -138,7 +138,7 @@ void MszSwitchWebApi::handleSwitchOff()
 {
   Serial.println("Switch API handleSwitchOff - enter");
   performAuthorizedAction([&]()
-                          { return this->handleSwitchOffCore(); });
+                          { return this->handleSwitchOnOffCore(false); });
   Serial.println("Switch API handleSwitchOff - exit");
 }
 
@@ -304,22 +304,22 @@ CoreHandlerResponse MszSwitchWebApi::handleGetInfoCore()
   return response;
 }
 
-CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore()
+CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
 {
-  Serial.println("Switch API handleSwitchOnCore - enter");
+  Serial.println("Switch API handleSwitchOnOffCore - enter");
 
   // Get and validate the parameters
   String switchName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SWITCH_NAME);
   if ((switchName == nullptr) || (switchName == "") || (switchName.length() > MAX_SWITCH_NAME_LENGTH))
   {
-    Serial.println("Switch API handleSwitchOnCore - switch name not found");
+    Serial.println("Switch API handleSwitchOnOffCore - switch name not found");
 
     CoreHandlerResponse response;
     response.statusCode = HTTP_BAD_REQUEST_CODE;
     response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
     response.returnContent = "Switch name not found!";
 
-    Serial.println("Switch API handleSwitchOnCore - exit");
+    Serial.println("Switch API handleSwitchOnOffCore - exit");
     return response;
   }
 
@@ -329,7 +329,7 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore()
   SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
   if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
   {
-    Serial.println("Switch API handleSwitchOnCore - switch not found");
+    Serial.println("Switch API handleSwitchOnOffCore - switch not found");
 
     response.statusCode = HTTP_NOT_FOUND_CODE;
     response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
@@ -337,80 +337,23 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnCore()
   }
   else
   {
-    Serial.println("Switch should be ON, by now!");
-
     switchSender.setProtocol(switchData.switchProtocol);
     if (switchData.isTriState)
     {
-      switchSender.sendTriState(switchData.switchOnCommand);
+      switchSender.sendTriState((switchItOn ? switchData.switchOnCommand : switchData.switchOffCommand));
     }
     else
     {
-      switchSender.send(switchData.switchOnCommand);
+      switchSender.send((switchItOn ? switchData.switchOnCommand : switchData.switchOffCommand));
     }
 
     Serial.println("Preparing response data...");
     response.statusCode = HTTP_OK_CODE;
     response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch " + switchName + " is now ON";
+    response.returnContent = "Switch " + switchName + " is now " + (switchItOn ? "ON" : "OFF") + "!";
   }
 
-  Serial.println("Switch API handleSwitchOnCore - exit");
-  return response;
-}
-
-CoreHandlerResponse MszSwitchWebApi::handleSwitchOffCore()
-{
-  Serial.println("Switch API handleSwitchOffCore - enter");
-
-  // Get and validate the parameters.
-  String switchName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SWITCH_NAME);
-  if ((switchName == nullptr) || (switchName == "") || (switchName.length() > MAX_SWITCH_NAME_LENGTH))
-  {
-    Serial.println("Switch API handleSwitchOnCore - switch name missing");
-
-    CoreHandlerResponse response;
-    response.statusCode = HTTP_BAD_REQUEST_CODE;
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch name missing!";
-
-    Serial.println("Switch API handleSwitchOffCore - exit");
-    return response;
-  }
-
-  // Now execute the core logic.
-  MszSwitchRepository switchRepository;
-  CoreHandlerResponse response;
-  SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
-  if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
-  {
-    Serial.println("Switch API handleSwitchOffCore - switch not found");
-
-    response.statusCode = HTTP_NOT_FOUND_CODE;
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch " + switchName + " cannot be found!";
-  }
-  else
-  {
-    Serial.println("Switch should be OFF, by now!");
-
-    switchSender.setProtocol(switchData.switchProtocol);
-    if (switchData.isTriState)
-    {
-      switchSender.sendTriState(switchData.switchOffCommand);
-    }
-    else
-    {
-      switchSender.send(switchData.switchOffCommand);
-    }
-
-    Serial.println("Preparing response data...");
-    response.statusCode = HTTP_OK_CODE;
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch " + switchName + " is now OFF";
-  }
-
-  Serial.println("Switch API handleSwitchOffCore - exit");
+  Serial.println("Switch API handleSwitchOnOffCore - exit");
   return response;
 }
 
