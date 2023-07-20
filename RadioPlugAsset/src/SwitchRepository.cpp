@@ -104,6 +104,13 @@ bool MszSwitchRepository::saveSwitchData(String switchName, SwitchDataParams swi
 {
     Serial.println("SwitchRepository::saveSwitchData - enter");
 
+    Serial.println("SwitchRepository::saveSwitchData - switchName = " + String(switchName));
+    Serial.println("SwitchRepository::saveSwitchData - switchName = " + String(switchDataParams.switchName));
+    Serial.println("SwitchRepository::saveSwitchData - switchProtocol = " + String(switchDataParams.switchProtocol));
+    Serial.println("SwitchRepository::saveSwitchData - switchOnCommand = " + String(switchDataParams.switchOnCommand));
+    Serial.println("SwitchRepository::saveSwitchData - switchOffCommand = " + String(switchDataParams.switchOffCommand));
+    Serial.println("SwitchRepository::saveSwitchData - isTriState = " + String(switchDataParams.isTriState));
+
     bool succeeded = false;
     String fileName = String(SWITCH_FILENAME_PREFIX) + switchName;
     File file = SPIFFS.open(fileName.c_str(), "w");

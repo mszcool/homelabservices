@@ -165,7 +165,6 @@ void MszSwitchWebApi::handleUpdateMetadata()
 bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
 {
   Serial.println("Getting switch data parameters - enter.");
-  SwitchDataParams params;
 
   // Read the string data from parameters.
   String paramSwitchName = this->getQueryStringParam(MszSwitchWebApi::PARAM_SWITCH_NAME);
@@ -187,13 +186,13 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
   }
 
   // Move the items into the structure
-  paramSwitchName.toCharArray(params.switchName, MAX_SWITCH_NAME_LENGTH + 1);
-  paramCommandOn.toCharArray(params.switchOnCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
-  paramCommandOff.toCharArray(params.switchOffCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+  paramSwitchName.toCharArray(switchParams.switchName, MAX_SWITCH_NAME_LENGTH + 1);
+  paramCommandOn.toCharArray(switchParams.switchOnCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+  paramCommandOff.toCharArray(switchParams.switchOffCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
 
   // Read types that require conversion from parameters - protocol.
   std::istringstream convProto(paramProtocol.c_str());
-  convProto >> std::noskipws >> params.switchProtocol;
+  convProto >> std::noskipws >> switchParams.switchProtocol;
   if (convProto.fail())
   {
     Serial.println("Getting switch data parameters - convert protocol failed - exit.");
@@ -202,13 +201,13 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
 
   // Read types that require conversion from parameters - isTriState.
   std::istringstream convTri(paramIsTriState.c_str());
-  convTri >> std::boolalpha >> params.isTriState;
+  convTri >> std::boolalpha >> switchParams.isTriState;
   if (convTri.fail())
   {
     Serial.println("Getting switch data parameters - convert Tristate failed - exit.");
     return false;
   }
-
+  
   Serial.println("Getting switch data parameters - exit.");
   return true;
 }
@@ -375,7 +374,7 @@ CoreHandlerResponse MszSwitchWebApi::handleUpdateSwitchDataCore()
     Serial.println("Switch API handleUpdateSwitchDataCore - exit");
     return response;
   }
-
+  
   // If all parameters are validated, execute the core logic.
   MszSwitchRepository switchRepository;
   bool succeeded = switchRepository.saveSwitchData(switchData.switchName, switchData);

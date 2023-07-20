@@ -177,7 +177,10 @@ def main():
     # Now, you can access the arguments like this:
     operation = args.operation
     if operation == 'info':
-        status, sensor_name, sensor_location = get_metadata_from_switch(args.ip, headers)
+        result, status, sensor_name, sensor_location = get_metadata_from_switch(args.ip, headers)
+        if not result:
+            print("Failed to get metadata. Exiting...")
+            SystemExit(1)
     elif operation == 'updateinfo':
         result = update_metadata_of_switch(args.ip, headers, args.name, args.location)
         if not result:
