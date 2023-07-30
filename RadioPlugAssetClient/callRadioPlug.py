@@ -23,14 +23,28 @@ def create_hmac_signature(secret_key, token, token_timestamp_str):
 #
 # Creates the final request URL and calls the endpoint.
 #
-def call_endpoint(switch_ip, headers, operation, queryStr):
+def call_endpoint(switch_ip, headers, operation, queryStr, max_retries=15, retry_interval=5):
     netloc = switch_ip
     print("[Call Endpoint] Netloc:", netloc)
     print("[Call Endpoint] Operation:", operation)
     print("[Call Endpoint] Query string:", queryStr)
     path = '/{}?{}'.format(operation, queryStr)
     finalUrl = urlunparse(('http', netloc, path, '', '', ''))
-    response = requests.get(finalUrl, headers=headers)
+
+    # Retry since the sensor sometimes disconnects from the WiFi due to signal strength issues.
+    for retry in range(max_retries):
+        try:
+            response = requests.get(finalUrl, headers=headers)
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            if retry < max_retries - 1:
+                print(f"Retrying in {retry_interval} seconds...")
+                time.sleep(retry_interval)
+            else:
+                print("Max retries reached. Giving up.")
+                raise
+
     return response
 
 #
