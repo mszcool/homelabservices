@@ -1,0 +1,6 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "SecretHandler",
+    "version": "1.0.0",
+    "description": "A simple handler for secrets used across multiple of my assets."
+}
