@@ -1,0 +1,6 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "AssetApiBase",
+    "version": "1.0.0",
+    "description": "A simple base class for building web APIs used across multiple of my assets."
+}
