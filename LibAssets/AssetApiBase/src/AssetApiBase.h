@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#include "..\..\SecretHandler\src\SecretHandler.h"
+#include "SecretHandler.h"
 #include "AssetApiBaseData.h"
 
 #define HTTP_OK_CODE 200
@@ -21,7 +21,7 @@ class MszAssetApiBase
 {
 public:
     MszAssetApiBase();
-    MszAssetApiBase(int serverPort);
+    MszAssetApiBase(short secretId, int serverPort);
     virtual ~MszAssetApiBase();
 
     void begin(MszSecretHandler *secretHandler);
@@ -34,13 +34,13 @@ public:
     static constexpr const char *PARAM_SENSOR_NAME = "name";
     static constexpr const char *PARAM_SENSOR_LOCATION = "location";
 
-    static const int HTTP_AUTH_SECRET_ID = 0;
     static const int TOKEN_EXPIRATION_SECONDS = 60;
 
 protected:
     // Basic members.
     bool logLoopDone = false;
     int serverPort = 80;
+    short secretId = 0;
 
     // Passed in as a pointer as created outside of the scope of an instance of this class.
     MszSecretHandler *secretHandler;
