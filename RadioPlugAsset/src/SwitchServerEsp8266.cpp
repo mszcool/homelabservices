@@ -3,7 +3,7 @@
 #include <functional>
 #include "SwitchServerEsp8266.h"
 
-MszSwitchApiEsp8266::MszSwitchApiEsp8266(int port) : MszSwitchWebApi(port)
+MszSwitchApiEsp8266::MszSwitchApiEsp8266(short secretId, int serverPort) : MszSwitchWebApi(secretId, serverPort)
 {
 }
 

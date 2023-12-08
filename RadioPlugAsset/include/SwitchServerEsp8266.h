@@ -11,7 +11,7 @@
 /// @details This class implements the MszSwitchWebApi class for the ESP8266 platform.
 class MszSwitchApiEsp8266 : public MszSwitchWebApi {
 public:
-  MszSwitchApiEsp8266(int port);
+  MszSwitchApiEsp8266(short secretId, int serverPort);
 
 protected:
   ESP8266WebServer server;

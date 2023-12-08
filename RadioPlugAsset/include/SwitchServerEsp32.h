@@ -10,7 +10,7 @@
 /// @details This class implements the MszSwitchWebApi class for the ESP32 platform.
 class MszSwitchApiEsp32 : public MszSwitchWebApi {
 public :
-  MszSwitchApiEsp32(int port);
+  MszSwitchApiEsp32(short secretId, int serverPort);
 
 protected:
   WebServer server;

@@ -6,8 +6,8 @@
 #include <functional>
 #include "SwitchServerEsp32.h"
 
-MszSwitchApiEsp32::MszSwitchApiEsp32(int port)
-    : MszSwitchWebApi(port), server(port)
+MszSwitchApiEsp32::MszSwitchApiEsp32(short secretId, int serverPort)
+    : MszSwitchWebApi(secretId, serverPort), server(serverPort)
 {
 }
 

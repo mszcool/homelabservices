@@ -3,18 +3,8 @@
 
 #include <Arduino.h>
 
-#define MAX_SENSOR_NAME_LENGTH 32
-#define MAX_SENSOR_LOCATION_LENGTH 64
 #define MAX_SWITCH_NAME_LENGTH 64
 #define MAX_SWITCH_COMMAND_LENGTH 64
-
-/// @brief Defines the parameters for the metadata
-/// @details Defines a token used for securing content, sensor name, and sensor location.
-struct SwitchMetadataParams
-{
-  char sensorName[MAX_SENSOR_NAME_LENGTH+1];
-  char sensorLocation[MAX_SENSOR_LOCATION_LENGTH+1];
-};
 
 /// @brief Defines the parameters for the Switch
 /// @details Defines a unique ID for the switch such that the config can be updated, a name, and the command.

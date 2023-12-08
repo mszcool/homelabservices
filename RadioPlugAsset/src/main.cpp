@@ -26,9 +26,9 @@ const char *SECRET_KEY_DEFAULT_VALUE = "yourSecret123!here";
 
 WiFiManager wifiManager;
 #if defined(ESP32)
-MszSwitchApiEsp32 switchServer(80);
+MszSwitchApiEsp32 switchServer(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, 80);
 #elif defined(ESP8266)
-MszSwitchApiEsp8266 switchServer(80);
+MszSwitchApiEsp8266 switchServer(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, 80);
 #endif
 
 void setupWifi(MszSecretHandler *secretHandler);
