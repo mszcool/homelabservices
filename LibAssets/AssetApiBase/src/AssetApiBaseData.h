@@ -23,4 +23,18 @@ struct AssetMetadataParams
   char sensorLocation[MAX_SENSOR_LOCATION_LENGTH+1];
 };
 
-#endif // MSZ_ASSETAPIBASEDATA_H
+/// @brief Base repository for assets
+/// @details Defines the base class for a repository implementation
+class AssetBaseRepository
+{
+  public:
+    AssetBaseRepository();
+    virtual ~AssetBaseRepository();
+
+    static constexpr const char *ASSET_METADATA_FILENAME = "/swm";
+
+    AssetMetadataParams loadMetadata();
+    bool saveMetadata(AssetMetadataParams metadata);
+};
+
+#endif //MSZ_ASSETAPIBASEDATA_H

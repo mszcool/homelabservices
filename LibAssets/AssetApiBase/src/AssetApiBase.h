@@ -70,10 +70,6 @@ protected:
 private:
     // Private helper methods.
     bool getMetadataParams(AssetMetadataParams &metadataParams);
-
-    // Core handler implementations provided for all derived classes.
-    CoreHandlerResponse handleGetInfoCore();
-    CoreHandlerResponse handleUpdateInfoCore();
 };
 
 #endif // MSZ_ASSETAPIBASE

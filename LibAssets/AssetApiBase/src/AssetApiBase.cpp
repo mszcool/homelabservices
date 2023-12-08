@@ -151,3 +151,81 @@ bool MszAssetApiBase::validateAuthorizationToken(int timestamp, String token, St
         return false;
     }
 }
+
+void MszAssetApiBase::handleGetInfo()
+{
+    Serial.println("Asset API - handleGetInfo - enter");
+    performAuthorizedAction([this]() -> CoreHandlerResponse {
+        AssetBaseRepository switchRepository;
+        AssetMetadataParams metadata = switchRepository.loadMetadata();
+
+        CoreHandlerResponse response;
+        response.statusCode = HTTP_OK_CODE;
+        response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+        // TODO: update this to ArduinoJson as library before making additional API methods.
+        response.returnContent = "{"
+                                 "  \"status\": \"running\",\n"
+                                 "  \"sensorName\": \"" + String(metadata.sensorName) + "\",\n"
+                                 "  \"sensorLocation\": \"" + String(metadata.sensorLocation) + "\"\n"
+                                 "}";
+        return response;
+    });
+    Serial.println("Asset API - handleGetInfo - exit");
+}
+
+void MszAssetApiBase::handleUpdateInfo()
+{
+    Serial.println("Asset API - handleUpdateInfo - enter");
+    performAuthorizedAction([this]() -> CoreHandlerResponse {
+        AssetBaseRepository assetRepository;
+        AssetMetadataParams metadataParams;
+
+        if(!(this->getMetadataParams(metadataParams)))
+        {
+            Serial.println("Asset API - handleUpdateInfo - invalid metadata parameters - exit");
+
+            CoreHandlerResponse response;
+            response.statusCode = HTTP_BAD_REQUEST_CODE;
+            response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+            response.returnContent = "Bad Request";
+            
+            Serial.println("Asset API - handleUpdateInfo - exit");
+            return response;
+        }
+
+        // Validation succeeded, let's write the data to the repository.
+        assetRepository.saveMetadata(metadataParams);
+
+        CoreHandlerResponse response;
+        response.statusCode = HTTP_OK_CODE;
+        response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
+        response.returnContent = "UPDATED";
+        return response;
+    });
+    Serial.println("Asset API - handleUpdateInfo - exit");
+}
+
+bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
+{
+    Serial.println("Asset API - getMetadataParams - enter");
+
+    metadataParams.sensorName[0] = '\0';
+    metadataParams.sensorLocation[0] = '\0';
+
+    String sensorName = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_NAME);
+    String sensorLocation = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_LOCATION);
+
+    if (sensorName == nullptr || sensorName == "" || sensorLocation == nullptr || sensorLocation == "")
+    {
+        Serial.println("Asset API - getMetadataParams - invalid metadata parameters - exit");
+        return false;
+    }
+
+    sensorName.toCharArray(metadataParams.sensorName, sizeof(metadataParams.sensorName));
+    sensorLocation.toCharArray(metadataParams.sensorLocation, sizeof(metadataParams.sensorLocation));
+
+    Serial.println("Asset API - getMetadataParams - sensorName = " + String(metadataParams.sensorName));
+    Serial.println("Asset API - getMetadataParams - sensorLocation = " + String(metadataParams.sensorLocation));
+    Serial.println("Asset API - getMetadataParams - exit");
+    return true;
+}
