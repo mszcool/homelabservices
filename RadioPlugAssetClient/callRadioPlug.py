@@ -78,7 +78,7 @@ def get_metadata_from_switch(switch_ip, headers):
 #
 def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
     print("[Metadata Update] Setting sensor name and location...")
-    response = call_endpoint(switch_ip, headers, 'updatemetadata', 'name={}&location={}'.format(sensor_name, sensor_location))
+    response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location))
     print("[Metadata Update] Response status code:", response.status_code)
     print("[Metadata Update] Response body:", response.text)
     if response.status_code == 200:
