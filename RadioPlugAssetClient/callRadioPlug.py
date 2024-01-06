@@ -165,6 +165,38 @@ def apply_configuration(switch_ip, headers, config_file_name):
     except FileNotFoundError:
         print("[Apply config] File not found. Exiting...")
         return False
+    
+#
+# Turn switches on or off by configuration
+#
+def turn_switches_on_or_off_by_config(switch_ip, headers, config_file_name, turn_on):
+    print("[Turn switches on/off] Turning switches {}...".format('on' if turn_on else 'off'))
+    # First, check if the file exists
+    try:
+        with open(config_file_name, 'r') as f:
+            json_str = f.read()
+            try:
+                print("[Turn switches on/off] Loading configuration data...")
+                config = radioPlugEntities.RadioPlugCollection.from_json(json_str)
+                print("[Turn switches on/off] Data loaded, now turning switches {}...".format('on' if turn_on else 'off'))
+                # Now, turn on or off each switch part of the config
+                for sw in config.plugs:
+                    result = turn_switch_on_or_off(switch_ip, headers, sw.name, turn_on)
+                    if not result:
+                        print("[Turn switches on/off] Failed turning switch {}, stopping.".format(sw.name))
+                        return False
+                    sleep_time = 0.5
+                    #print("[Turn switches on/off] Sleeping for {} seconds...".format(sleep_time))
+                    time.sleep(sleep_time)
+                print("[Turn switches on/off] Done.")
+                return True
+            except Exception as e:
+                print("[Turn switches on/off] Failed to parse JSON or process JSON contents: {}".format(e))
+                return False
+    except FileNotFoundError:
+        print("[Turn switches on/off] File not found. Exiting...")
+        return False
+
 
 #
 # Main program execution
@@ -204,6 +236,11 @@ def main():
     # Apply configuration from configuration JSON file to target
     parser_applyconfig = subparsers.add_parser('applyconfig')
     parser_applyconfig.add_argument('--file', required=True)
+
+    # Apply configuration from configuration JSON file to target
+    parser_applyconfig = subparsers.add_parser('turnbyconfig')
+    parser_applyconfig.add_argument('--file', required=True)
+    parser_applyconfig.add_argument('--status', required=True, choices=['on', 'off'])
 
     # Parse the arguments
     args = parser.parse_args()
@@ -254,13 +291,19 @@ def main():
         if not result:
             print("Failed to apply configuration. Exiting...")
             SystemExit(1)
+    elif operation == 'turnbyconfig':
+        result = turn_switches_on_or_off_by_config(args.ip, headers, args.file, args.status == 'on')
+        if not result:
+            print("Failed to turn switches on/off. Exiting...")
+            SystemExit(1)
     elif operation == 'help' or operation == None:
         print(f"Valid operations are: info, updateinfo, registerswitch, switch")
         print(f"info --secret <secretKey> --ip <switchip>: Get the metadata from the switch.")
         print(f"updateinfo --secret <secretKey> --ip <switchip> --name <name> --location <location>: Update the metadata of the switch.")
         print(f"registerswitch --secret <secretKey> --ip <switchip> --name <name> --oncommand <oncommand> --offcommand <offcommand> --protocol <protocol> --istristate <istristate>: Register a new switch with the switch-sensor.")
         print(f"switch --secret <secretKey> --ip <switchip> --name <name> --status <status>: Turn the switch on or off.")
-        print(f"applyconfig --file <pathandfilename>")
+        print(f"applyconfig --file <pathandfilename>: Apply a radio plug configuration file to the target plug")
+        print(f"turnbyconfig --file <pathandfilename> --status <status>: Turn switches on or off by configuration")
     else:
         print(f"Invalid operation: {operation}")
         print(f"Valid operations are: info, updateinfo, registerswitch, switch")
