@@ -7,6 +7,8 @@ import argparse
 import secrets
 from urllib.parse import urlunparse, urlencode, quote
 
+import radioPlugEntities
+
 #
 # This function creates a HMAC signature for the given token and timestamp.
 #
@@ -132,6 +134,39 @@ def turn_switch_on_or_off(switch_ip, headers, switch_name, turn_on):
         return False
 
 #
+# Apply a radio plug configuration file to the target plug
+#
+def apply_configuration(switch_ip, headers, config_file_name):
+    print("[Apply config] Applying configuration from file {}...".format(config_file_name))
+    # First, check if the file exists
+    try:
+        with open(config_file_name, 'r') as f:
+            json_str = f.read()
+            try:
+                print("[Apply config] Loading configuration data...")
+                config = radioPlugEntities.RadioPlugCollection.from_json(json_str)
+                print("[Apply config] Data loaded, now applying to switch...")
+                # Start with updating the metadata / info
+                result = update_metadata_of_switch(switch_ip, headers, config.name, config.location)
+                if not result:
+                    print("[Apply config] Failed updating metadata, stopping.")
+                    return False
+                # Now, register or update each switch part of the config
+                for sw in config.plugs:
+                    result = update_switch_data(switch_ip, headers, sw.name, sw.onCommand, sw.offCommand, sw.isTriState, sw.protocol)
+                    if not result:
+                        print("[Apply config] Failed updating switch {}, stopping.".format(sw.name))
+                        return False
+                print("[Apply config] Done.")
+                return True
+            except Exception as e:
+                print("[Apply config] Failed to parse JSON or process JSON contents: {}".format(e))
+                return False
+    except FileNotFoundError:
+        print("[Apply config] File not found. Exiting...")
+        return False
+
+#
 # Main program execution
 #
 
@@ -165,6 +200,10 @@ def main():
     parser_switch = subparsers.add_parser('switch')
     parser_switch.add_argument('--name', required=True)
     parser_switch.add_argument('--status', required=True, choices=['on', 'off'])
+
+    # Apply configuration from configuration JSON file to target
+    parser_applyconfig = subparsers.add_parser('applyconfig')
+    parser_applyconfig.add_argument('--file', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -210,12 +249,18 @@ def main():
         if not result:
             print("Failed to turn switch on/off. Exiting...")
             SystemExit(1)
+    elif operation == 'applyconfig':
+        result = apply_configuration(args.ip, headers, args.file)
+        if not result:
+            print("Failed to apply configuration. Exiting...")
+            SystemExit(1)
     elif operation == 'help' or operation == None:
         print(f"Valid operations are: info, updateinfo, registerswitch, switch")
         print(f"info --secret <secretKey> --ip <switchip>: Get the metadata from the switch.")
         print(f"updateinfo --secret <secretKey> --ip <switchip> --name <name> --location <location>: Update the metadata of the switch.")
         print(f"registerswitch --secret <secretKey> --ip <switchip> --name <name> --oncommand <oncommand> --offcommand <offcommand> --protocol <protocol> --istristate <istristate>: Register a new switch with the switch-sensor.")
         print(f"switch --secret <secretKey> --ip <switchip> --name <name> --status <status>: Turn the switch on or off.")
+        print(f"applyconfig --file <pathandfilename>")
     else:
         print(f"Invalid operation: {operation}")
         print(f"Valid operations are: info, updateinfo, registerswitch, switch")

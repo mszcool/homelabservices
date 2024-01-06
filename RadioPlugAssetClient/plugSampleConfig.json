@@ -1,0 +1,20 @@
+{
+    "name": "testPlug",
+    "location": "test location specification",
+    "plugs": [
+        {
+            "name": "testPlug",
+            "onCommand": "ABC",
+            "offCommand": "DEF",
+            "isTriState": "false",
+            "protocol": 1
+        },
+        {
+            "name": "testPlug2",
+            "onCommand": "ABC",
+            "offCommand": "DEF",
+            "isTriState": "false",
+            "protocol": 1
+        }
+    ]
+}
