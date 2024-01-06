@@ -163,7 +163,7 @@ void MszAssetApiBase::handleGetInfo()
         response.statusCode = HTTP_OK_CODE;
         response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
         // TODO: update this to ArduinoJson as library before making additional API methods.
-        response.returnContent = "{"
+        response.returnContent = "{\n"
                                  "  \"status\": \"running\",\n"
                                  "  \"sensorName\": \"" + String(metadata.sensorName) + "\",\n"
                                  "  \"sensorLocation\": \"" + String(metadata.sensorLocation) + "\"\n"

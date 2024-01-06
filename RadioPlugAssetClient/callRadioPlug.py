@@ -56,7 +56,8 @@ def get_metadata_from_switch(switch_ip, headers):
     print("[Metadata] Getting metadata from the switch...")
     response = call_endpoint(switch_ip, headers, 'info', {})
     print("[Metadata] Response status code:", response.status_code)
-    print("[Metadata] Response body:", response.text)
+    print("[Metadata] Response body:")
+    print(response.text)
 
     if response.status_code == 200:
         lines = response.text.split('\n')
