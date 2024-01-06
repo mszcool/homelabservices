@@ -21,9 +21,24 @@ void MszSwitchApiEsp32::handleClient()
     this->server.handleClient();
 }
 
-void MszSwitchApiEsp32::registerEndpoint(String endpoint, std::function<void()> handler)
+void MszSwitchApiEsp32::registerGetEndpoint(String endpoint, std::function<void()> handler)
 {
     server.on(endpoint.c_str(), HTTP_GET, handler);
+}
+
+void MszSwitchApiEsp32::registerPostEndpoint(String endpoint, std::function<void()> handler)
+{
+    server.on(endpoint.c_str(), HTTP_POST, handler);
+}
+
+void MszSwitchApiEsp32::registerPutEndpoint(String endpoint, std::function<void()> handler)
+{
+    server.on(endpoint.c_str(), HTTP_PUT, handler);
+}
+
+void MszSwitchApiEsp32::registerDeleteEndpoint(String endpoint, std::function<void()> handler)
+{
+    server.on(endpoint.c_str(), HTTP_DELETE, handler);
 }
 
 String MszSwitchApiEsp32::getQueryStringParam(String paramName)

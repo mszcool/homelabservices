@@ -17,10 +17,31 @@ void MszSwitchApiEsp8266::handleClient()
   server.handleClient();
 }
 
-void MszSwitchApiEsp8266::registerEndpoint(String endpoint, std::function<void()> handler)
+void MszSwitchApiEsp8266::registerGetEndpoint(String endpoint, std::function<void()> handler)
 {
   Serial.println("registerEndpoint - enter");
   server.on(endpoint.c_str(), HTTP_GET, handler);
+  Serial.println("registerEndpoint - exit");
+}
+
+void MszSwitchApiEsp8266::registerPostEndpoint(String endpoint, std::function<void()> handler)
+{
+  Serial.println("registerEndpoint - enter");
+  server.on(endpoint.c_str(), HTTP_POST, handler);
+  Serial.println("registerEndpoint - exit");
+}
+
+void MszSwitchApiEsp8266::registerPutEndpoint(String endpoint, std::function<void()> handler)
+{
+  Serial.println("registerEndpoint - enter");
+  server.on(endpoint.c_str(), HTTP_PUT, handler);
+  Serial.println("registerEndpoint - exit");
+}
+
+void MszSwitchApiEsp8266::registerDeleteEndpoint(String endpoint, std::function<void()> handler)
+{
+  Serial.println("registerEndpoint - enter");
+  server.on(endpoint.c_str(), HTTP_DELETE, handler);
   Serial.println("registerEndpoint - exit");
 }
 

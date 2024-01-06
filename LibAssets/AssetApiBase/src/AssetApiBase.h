@@ -62,7 +62,10 @@ protected:
     virtual void beginCfg() = 0;        // Called by derived classes to customize endpoint registration and do pre-serve configuration.
     virtual void beginServe() = 0;      // Called by derived classes to launch the web server implementation.
     virtual void handleClient() = 0;
-    virtual void registerEndpoint(String endPoint, std::function<void()> handler) = 0;
+    virtual void registerGetEndpoint(String endPoint, std::function<void()> handler) = 0;
+    virtual void registerPostEndpoint(String endPoint, std::function<void()> handler) = 0;
+    virtual void registerPutEndpoint(String endPoint, std::function<void()> handler) = 0;
+    virtual void registerDeleteEndpoint(String endPoint, std::function<void()> handler) = 0;
     virtual String getQueryStringParam(String paramName) = 0;
     virtual String getHttpHeader(String headerName) = 0;
     virtual void sendResponseData(CoreHandlerResponse responseData) = 0;

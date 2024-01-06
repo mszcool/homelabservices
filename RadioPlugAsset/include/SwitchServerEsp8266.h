@@ -18,7 +18,10 @@ protected:
   
   virtual void beginServe() override;
   virtual void handleClient() override;
-  virtual void registerEndpoint(String endPoint, std::function<void()> handler) override;
+  virtual void registerGetEndpoint(String endPoint, std::function<void()> handler) override;
+  virtual void registerPostEndpoint(String endPoint, std::function<void()> handler) override;
+  virtual void registerPutEndpoint(String endPoint, std::function<void()> handler) override;
+  virtual void registerDeleteEndpoint(String endPoint, std::function<void()> handler) override;
   virtual String getQueryStringParam(String paramName) override;
   virtual String getHttpHeader(String headerName) override;
   virtual void sendResponseData(CoreHandlerResponse responseData) override;

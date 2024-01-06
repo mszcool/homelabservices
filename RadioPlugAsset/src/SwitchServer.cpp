@@ -25,9 +25,9 @@ void MszSwitchWebApi::beginCfg()
   Serial.println("MszSwitchWebApi::beginCfg() - enter");
 
   Serial.println("MszSwitchWebApi::beginCfg() - Configuring Switch API secret handler");
-  this->registerEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this));
-  this->registerEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this));
-  this->registerEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this));
+  this->registerGetEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this));
+  this->registerGetEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this));
+  this->registerGetEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this));
   Serial.println("MszSwitchWebApi::beginCfg() - Switch API endpoints configured!");
 
   Serial.println("MszSwitchWebApi::beginCfg() - Configuring RCSwitch...");
