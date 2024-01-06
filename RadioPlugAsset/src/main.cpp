@@ -1,5 +1,6 @@
 #include "SecretHandler.h"
 #include <Arduino.h>
+#include <Preferences.h>
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -23,8 +24,11 @@ const IPAddress WIFI_NETWORK_STATIC_SUBNET_MASK(255, 255, 255, 0);
 const char *SECRET_KEY_PARAM_NAME = "secretKeyUx";
 const char *SECRET_KEY_PARAM_DISPLAYNAME = "Secret Key for Authorization (empty = disabled)";
 const char *SECRET_KEY_DEFAULT_VALUE = "yourSecret123!here";
+const char *PREFERENCES_NAMESPACE = "msz-radioswsrv";
 
 WiFiManager wifiManager;
+Preferences preferences;
+
 #if defined(ESP32)
 MszSwitchApiEsp32 switchServer(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, 80);
 #elif defined(ESP8266)
@@ -38,6 +42,9 @@ void setup()
   // Start the serial logger
   Serial.begin(9600);
   Serial.println("Starting radio switch server...");
+
+  // Open preferences for the namespace of this app
+  preferences.begin(PREFERENCES_NAMESPACE, false);
 
   // Creating a secrets handler
   MszSecretHandler *secretHandler = new MszSecretHandler();
@@ -66,8 +73,11 @@ void setupWifi(MszSecretHandler *secretHandler)
   WiFi.hostname(WIFI_HOST_NAME);
 #endif
 
+  // Get the secret key from preferences if it is available
+  String secretKey = preferences.getString(SECRET_KEY_PARAM_NAME, SECRET_KEY_DEFAULT_VALUE);
+
   // Set configuration settings for WiFi Manager
-  WiFiManagerParameter secretKeyUiParameter(SECRET_KEY_PARAM_NAME, SECRET_KEY_PARAM_DISPLAYNAME, SECRET_KEY_DEFAULT_VALUE, 20);
+  WiFiManagerParameter secretKeyUiParameter(SECRET_KEY_PARAM_NAME, SECRET_KEY_PARAM_DISPLAYNAME, secretKey.c_str(), 20);
   wifiManager.addParameter(&secretKeyUiParameter);
   wifiManager.setTimeout(WIFI_NETWORK_TIMEOUT_SECONDS);                    // Timeout in seconds
   wifiManager.setConfigPortalTimeout(WIFI_CONFIG_NETWORK_TIMEOUT_SECONDS); // Timeout in seconds
@@ -91,6 +101,11 @@ void setupWifi(MszSecretHandler *secretHandler)
     Serial.println("Saving secret key...");
     if(secretKeyUiParameter.getValueLength() > 0)
     {
+      if(secretKey.equals(secretKeyUiParameter.getValue()) == false)
+      {
+        Serial.println("Secret key changed, saving new value...");
+        preferences.putString(SECRET_KEY_PARAM_NAME, secretKeyUiParameter.getValue());
+      }
       secretHandler->setSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, secretKeyUiParameter.getValue(), secretKeyUiParameter.getValueLength());
     }
     Serial.println("Secret key saved!");
