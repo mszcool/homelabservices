@@ -82,12 +82,12 @@ void setupWifi(MszSecretHandler *secretHandler)
   wifiManager.setTimeout(WIFI_NETWORK_TIMEOUT_SECONDS);                    // Timeout in seconds
   wifiManager.setConfigPortalTimeout(WIFI_CONFIG_NETWORK_TIMEOUT_SECONDS); // Timeout in seconds
   wifiManager.setMinimumSignalQuality(WIFI_NETWORK_MIN_SIGNAL_QUALITY);    // Signal quality in %
+  wifiManager.setAPStaticIPConfig(WIFI_NETWORK_STATIC_IP, WIFI_NETWORK_STATIC_GATEWAY_IP, WIFI_NETWORK_STATIC_SUBNET_MASK);
   // wifiManager.setSTAStaticIPConfig(WIFI_NETWORK_STATIC_IP, WIFI_NETWORK_STATIC_GATEWAY_IP, WIFI_NETWORK_STATIC_SUBNET_MASK);
   wifiManager.setDebugOutput(true);
-
   // Now, let's connect to the previously saved WiFi, or start the
   // configuration WiFi. This is encapsulated in WifIManager's autoConnect() method.
-  if (wifiManager.autoConnect(WIFI_NETWORK_NAME))
+  if (wifiManager.autoConnect(WIFI_NETWORK_NAME, secretKey.c_str()))
   {
     Serial.println("Connected to WiFi!");
     Serial.println(WiFi.SSID());
