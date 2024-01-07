@@ -21,7 +21,7 @@ void MszAssetApiBase::begin(MszSecretHandler *secretHandler)
 
     // Configure the endpoints that all assets should have.
     this->registerGetEndpoint(MszAssetApiBase::API_ENDPOINT_INFO, std::bind(&MszAssetApiBase::handleGetInfo, this));
-    this->registerGetEndpoint(MszAssetApiBase::API_ENDPOINT_UPDATEINFO, std::bind(&MszAssetApiBase::handleUpdateInfo, this));
+    this->registerPutEndpoint(MszAssetApiBase::API_ENDPOINT_UPDATEINFO, std::bind(&MszAssetApiBase::handleUpdateInfo, this));
 
     // Then allow derived classes doing their configuration
     this->beginCfg();

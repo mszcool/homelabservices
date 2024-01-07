@@ -25,7 +25,7 @@ def create_hmac_signature(secret_key, token, token_timestamp_str):
 #
 # Creates the final request URL and calls the endpoint.
 #
-def call_endpoint(switch_ip, headers, operation, queryStr, max_retries=15, retry_interval=5):
+def call_endpoint(switch_ip, headers, operation, queryStr, max_retries=15, retry_interval=5, verb='GET'):
     netloc = switch_ip
     print("[Call Endpoint] Netloc:", netloc)
     print("[Call Endpoint] Operation:", operation)
@@ -36,7 +36,14 @@ def call_endpoint(switch_ip, headers, operation, queryStr, max_retries=15, retry
     # Retry since the sensor sometimes disconnects from the WiFi due to signal strength issues.
     for retry in range(max_retries):
         try:
-            response = requests.get(finalUrl, headers=headers)
+            if verb == 'GET':
+                response = requests.get(finalUrl, headers=headers)
+            elif verb == 'POST':
+                response = requests.post(finalUrl, headers=headers)
+            elif verb == 'PUT':
+                response = requests.put(finalUrl, headers=headers)
+            elif verb == 'DELETE':
+                response = requests.delete(finalUrl, headers=headers)
             return response
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
@@ -81,7 +88,7 @@ def get_metadata_from_switch(switch_ip, headers):
 #
 def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
     print("[Metadata Update] Setting sensor name and location...")
-    response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location))
+    response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location), verb='PUT')
     print("[Metadata Update] Response status code:", response.status_code)
     print("[Metadata Update] Response body:", response.text)
     if response.status_code == 200:
@@ -104,7 +111,8 @@ def update_switch_data(switch_ip, headers, switch_name, on_command, off_command,
             off_command, 
             is_tri_state, 
             protocol
-        )
+        ),
+        verb='PUT'
     )
     print("[Save Switch] Response status code:", response.status_code)
     print("[Save Switch] Response body:", response.text)
@@ -123,7 +131,8 @@ def turn_switch_on_or_off(switch_ip, headers, switch_name, turn_on):
         switch_ip,
         headers,
         'switchon' if turn_on else 'switchoff',
-        'name={}'.format(switch_name)
+        'name={}'.format(switch_name),
+        verb='PUT'
     )
 
     print("[Switch On/Off]  Response status code:", response.status_code)
