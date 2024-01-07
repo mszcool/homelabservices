@@ -102,23 +102,35 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
   String paramCommandOff = this->getQueryStringParam(MszSwitchWebApi::PARAM_COMMAND_OFF);
   String paramProtocol = this->getQueryStringParam(MszSwitchWebApi::PARAM_PROTOCOL);
   String paramIsTriState = this->getQueryStringParam(MszSwitchWebApi::PARAM_IS_TRISTATE);
+  String paramPulseLength = this->getQueryStringParam(MszSwitchWebApi::PARAM_PULSELENGTH);
+  String paramRepeatTransmit = this->getQueryStringParam(MszSwitchWebApi::PARAM_REPEATTRANSMIT);
 
-  if (paramSwitchName == nullptr || paramCommandOn == nullptr || paramCommandOff == nullptr || paramProtocol == nullptr || paramIsTriState == nullptr)
+  if (paramSwitchName == nullptr || paramCommandOn == nullptr ||
+      paramCommandOff == nullptr || paramProtocol == nullptr ||
+      paramIsTriState == nullptr || paramPulseLength == nullptr ||
+      paramRepeatTransmit == nullptr)
   {
     Serial.println("Getting switch data parameters - missing parameters - exit.");
     return false;
   }
 
-  if (paramSwitchName == "" || paramCommandOn == "" || paramCommandOff == "" || paramProtocol == "" || paramIsTriState == "")
+  if (paramSwitchName == "" || paramCommandOn == "" ||
+      paramCommandOff == "" || paramProtocol == "" ||
+      paramIsTriState == "" || paramPulseLength == "" ||
+      paramRepeatTransmit == "")
   {
     Serial.println("Getting switch data parameters - missing parameters - exit.");
     return false;
   }
+
+  // We need to test, if the pulseLength and the 
 
   // Move the items into the structure
   paramSwitchName.toCharArray(switchParams.switchName, MAX_SWITCH_NAME_LENGTH + 1);
   paramCommandOn.toCharArray(switchParams.switchOnCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
   paramCommandOff.toCharArray(switchParams.switchOffCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+  switchParams.pulseLength = paramPulseLength.toInt();
+  switchParams.repeatTransmit = paramRepeatTransmit.toInt();
 
   // Read types that require conversion from parameters - protocol.
   std::istringstream convProto(paramProtocol.c_str());
@@ -128,11 +140,28 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
     Serial.println("Getting switch data parameters - convert protocol failed - exit.");
     return false;
   }
+  convProto.clear();
+  convProto.str(paramPulseLength.c_str());
+  convProto >> std::noskipws >> switchParams.pulseLength;
+  if (convProto.fail())
+  {
+    Serial.println("Getting switch data parameters - convert pulseLength failed - exit.");
+    return false;
+  }
+  convProto.clear();
+  convProto.str(paramRepeatTransmit.c_str());
+  convProto >> std::noskipws >> switchParams.repeatTransmit;
+  if (convProto.fail())
+  {
+    Serial.println("Getting switch data parameters - convert repeatTransmit failed - exit.");
+    return false;
+  }
 
   // Read types that require conversion from parameters - isTriState.
-  std::istringstream convTri(paramIsTriState.c_str());
-  convTri >> std::boolalpha >> switchParams.isTriState;
-  if (convTri.fail())
+  convProto.clear();
+  convProto.str(paramIsTriState.c_str());
+  convProto >> std::boolalpha >> switchParams.isTriState;
+  if (convProto.fail())
   {
     Serial.println("Getting switch data parameters - convert Tristate failed - exit.");
     return false;
@@ -176,6 +205,8 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
   else
   {
     switchSender.setProtocol(switchData.switchProtocol);
+    switchSender.setPulseLength(switchData.pulseLength > 0 ? switchData.pulseLength : RCSWITCH_DATA_PULSE_LENGTH);
+    switchSender.setRepeatTransmit(switchData.repeatTransmit > 0 ? switchData.repeatTransmit : RCSWITCH_REPEAT_TRANSMIT);
     if (switchData.isTriState)
     {
       switchSender.sendTriState((switchItOn ? switchData.switchOnCommand : switchData.switchOffCommand));

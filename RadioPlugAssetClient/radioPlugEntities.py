@@ -1,12 +1,14 @@
 import json
 
 class RadioPlug:
-    def __init__(self, name, onCommand, offCommand, isTriState, protocol):
+    def __init__(self, name, onCommand, offCommand, isTriState, protocol, pulseLength, repeatTransmit):
         self.name = name
         self.onCommand = onCommand
         self.offCommand = offCommand
         self.isTriState = isTriState
         self.protocol = protocol
+        self.pulseLength = pulseLength
+        self.repeatTransmit = repeatTransmit
 
 class RadioPlugCollection:
     def __init__(self, name, location, plugs):

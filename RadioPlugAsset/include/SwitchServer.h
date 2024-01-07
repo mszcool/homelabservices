@@ -32,6 +32,8 @@ public:
   static constexpr const char *PARAM_COMMAND_OFF = "offcommand";
   static constexpr const char *PARAM_IS_TRISTATE = "istristate";
   static constexpr const char *PARAM_PROTOCOL = "protocol";
+  static constexpr const char *PARAM_PULSELENGTH = "pulselength";
+  static constexpr const char *PARAM_REPEATTRANSMIT = "repeattransmit";
 
   static const int HTTP_AUTH_SECRET_ID = 0;
   static const int TOKEN_EXPIRATION_SECONDS = 60;

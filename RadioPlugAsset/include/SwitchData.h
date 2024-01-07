@@ -17,6 +17,8 @@ struct SwitchDataParams
   char switchName[MAX_SWITCH_NAME_LENGTH+1];
   char switchOnCommand[MAX_SWITCH_COMMAND_LENGTH+1];
   char switchOffCommand[MAX_SWITCH_COMMAND_LENGTH+1];
+  int pulseLength;
+  int repeatTransmit;
 };
 
 #endif // SWITCHDATA_H

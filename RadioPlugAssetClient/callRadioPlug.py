@@ -99,18 +99,20 @@ def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
 #
 # Registers a new switch with the switch-sensor.
 #
-def update_switch_data(switch_ip, headers, switch_name, on_command, off_command, is_tri_state, protocol):
+def update_switch_data(switch_ip, headers, switch_name, on_command, off_command, is_tri_state, protocol, pulseLength, repeatTransmit):
     print("[Save Switch] Storing switch data...")
     response = call_endpoint(
         switch_ip, 
         headers, 
         'updateswitchdata', 
-        'name={}&oncommand={}&offcommand={}&istristate={}&protocol={}'.format(
+        'name={}&oncommand={}&offcommand={}&istristate={}&protocol={}&pulselength={}&repeattransmit={}'.format(
             switch_name, 
             on_command, 
             off_command, 
             is_tri_state, 
-            protocol
+            protocol,
+            pulseLength,
+            repeatTransmit
         ),
         verb='PUT'
     )
@@ -163,7 +165,7 @@ def apply_configuration(switch_ip, headers, config_file_name):
                     return False
                 # Now, register or update each switch part of the config
                 for sw in config.plugs:
-                    result = update_switch_data(switch_ip, headers, sw.name, sw.onCommand, sw.offCommand, sw.isTriState, sw.protocol)
+                    result = update_switch_data(switch_ip, headers, sw.name, sw.onCommand, sw.offCommand, sw.isTriState, sw.protocol, sw.pulseLength, sw.repeatTransmit)
                     if not result:
                         print("[Apply config] Failed updating switch {}, stopping.".format(sw.name))
                         return False
@@ -237,6 +239,8 @@ def main():
     parser_registerswitch.add_argument('--offcommand', required=True)
     parser_registerswitch.add_argument('--protocol', required=True, choices=[1, 2, 3, 4, 5], type=int)
     parser_registerswitch.add_argument('--istristate', required=True)
+    parser_registerswitch.add_argument('--pulselength', required=True, type=int)
+    parser_registerswitch.add_argument('--repeattransmit', required=True, type=int)
 
     # Create the parser for the "switch" command
     parser_switch = subparsers.add_parser('switch')
@@ -287,7 +291,7 @@ def main():
             print("Failed to update metadata. Exiting...")
             SystemExit(1)
     elif operation == 'registerswitch':
-        result = update_switch_data(args.ip, headers, args.name, args.oncommand, args.offcommand, args.istristate, args.protocol)
+        result = update_switch_data(args.ip, headers, args.name, args.oncommand, args.offcommand, args.istristate, args.protocol, args.pulselength, args.repeattransmit)
         if not result:
             print("Failed to register switch. Exiting...")
             SystemExit(1)
@@ -310,7 +314,7 @@ def main():
         print(f"Valid operations are: info, updateinfo, registerswitch, switch")
         print(f"info --secret <secretKey> --ip <switchip>: Get the metadata from the switch.")
         print(f"updateinfo --secret <secretKey> --ip <switchip> --name <name> --location <location>: Update the metadata of the switch.")
-        print(f"registerswitch --secret <secretKey> --ip <switchip> --name <name> --oncommand <oncommand> --offcommand <offcommand> --protocol <protocol> --istristate <istristate>: Register a new switch with the switch-sensor.")
+        print(f"registerswitch --secret <secretKey> --ip <switchip> --name <name> --oncommand <oncommand> --offcommand <offcommand> --protocol <protocol> --istristate <istristate> --pulselength <length> --repeattransmit <repat-attempts>: Register a new switch with the switch-sensor.")
         print(f"switch --secret <secretKey> --ip <switchip> --name <name> --status <status>: Turn the switch on or off.")
         print(f"applyconfig --file <pathandfilename>: Apply a radio plug configuration file to the target plug")
         print(f"turnbyconfig --file <pathandfilename> --status <status>: Turn switches on or off by configuration")

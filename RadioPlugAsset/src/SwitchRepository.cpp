@@ -30,6 +30,8 @@ SwitchDataParams MszSwitchRepository::loadSwitchData(String switchName)
         switchData.switchName[0] = '\0';
         switchData.switchOnCommand[0] = '\0';
         switchData.switchOffCommand[0] = '\0';
+        switchData.pulseLength = 0;
+        switchData.repeatTransmit = 0;
     }
 
     Serial.println("SwitchRepository::loadSwitchData - switchName = " + String(switchData.switchName));
@@ -37,6 +39,8 @@ SwitchDataParams MszSwitchRepository::loadSwitchData(String switchName)
     Serial.println("SwitchRepository::loadSwitchData - switchOnCommand = " + String(switchData.switchOnCommand));
     Serial.println("SwitchRepository::loadSwitchData - switchOffCommand = " + String(switchData.switchOffCommand));
     Serial.println("SwitchRepository::loadSwitchData - isTriState = " + String(switchData.isTriState));
+    Serial.println("SwitchRepository::loadSwitchData - pulseLength = " + String(switchData.pulseLength));
+    Serial.println("SwitchRepository::loadSwitchData - repeatTransmit = " + String(switchData.repeatTransmit));
     Serial.println("SwitchRepository::loadSwitchData - exit");
     return switchData;
 }
@@ -51,6 +55,8 @@ bool MszSwitchRepository::saveSwitchData(String switchName, SwitchDataParams swi
     Serial.println("SwitchRepository::saveSwitchData - switchOnCommand = " + String(switchDataParams.switchOnCommand));
     Serial.println("SwitchRepository::saveSwitchData - switchOffCommand = " + String(switchDataParams.switchOffCommand));
     Serial.println("SwitchRepository::saveSwitchData - isTriState = " + String(switchDataParams.isTriState));
+    Serial.println("SwitchRepository::saveSwitchData - pulseLength = " + String(switchDataParams.pulseLength));
+    Serial.println("SwitchRepository::saveSwitchData - repeatTransmit = " + String(switchDataParams.repeatTransmit));
 
     bool succeeded = false;
     String fileName = String(SWITCH_FILENAME_PREFIX) + switchName;
