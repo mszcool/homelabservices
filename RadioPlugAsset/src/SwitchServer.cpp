@@ -68,8 +68,11 @@ void MszSwitchWebApi::handleUpdateSwitchData()
 
       CoreHandlerResponse response;
       response.statusCode = HTTP_BAD_REQUEST_CODE;
-      response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-      response.returnContent = "INVALID_SWITCH_DATA";
+      response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+      response.returnContent = this->getErrorJsonDocument(
+                                      HTTP_BAD_REQUEST_CODE,
+                                      "Invalid Switch Data!",
+                                      "You did not provide valid switch data for updating the switch!");
 
       Serial.println("MszSwitchWebApi::handleUpdateSwitchDataCore - exit");
       return response;
@@ -81,8 +84,13 @@ void MszSwitchWebApi::handleUpdateSwitchData()
 
     CoreHandlerResponse response;
     response.statusCode = (succeeded ? HTTP_OK_CODE : HTTP_INTERNAL_SERVER_ERROR_CODE);
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = (succeeded ? "SWITCH_UPDATED" : "SWITCH_UPDATE_FAILED");
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+
+    JsonDocument respDoc;
+    respDoc["switchName"] = switchData.switchName;
+    respDoc["switchStatus"] = (succeeded ? "SWITCH_UPDATED" : "SWITCH_UPDATE_FAILED");
+    serializeJsonPretty(respDoc, response.returnContent);
+    
     return response;
   });
   Serial.println("MszSwitchWebApi::handleUpdateSwitchData - exit");
@@ -183,8 +191,11 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
 
     CoreHandlerResponse response;
     response.statusCode = HTTP_BAD_REQUEST_CODE;
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch name not found!";
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+    response.returnContent = this->getErrorJsonDocument(
+                                    HTTP_BAD_REQUEST_CODE,
+                                    "Invalid Switch!",
+                                    "You did not provide a switch name for turning on or off!");
 
     Serial.println("Switch API handleSwitchOnOffCore - exit");
     return response;
@@ -199,8 +210,11 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
     Serial.println("Switch API handleSwitchOnOffCore - switch not found");
 
     response.statusCode = HTTP_NOT_FOUND_CODE;
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch " + switchName + " cannot be found!";
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+    response.returnContent = this->getErrorJsonDocument(
+                                    HTTP_NOT_FOUND_CODE,
+                                    "Switch not found!",
+                                    "Switch " + switchName + " cannot be found!");
   }
   else
   {
@@ -218,8 +232,12 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
 
     Serial.println("Preparing response data...");
     response.statusCode = HTTP_OK_CODE;
-    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-    response.returnContent = "Switch " + switchName + " is now " + (switchItOn ? "ON" : "OFF") + "!";
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+
+    JsonDocument respDoc;
+    respDoc["switchName"] = switchName;
+    respDoc["switchStatus"] = (switchItOn ? "ON" : "OFF");
+    serializeJsonPretty(respDoc, response.returnContent);
   }
 
   Serial.println("Switch API handleSwitchOnOffCore - exit");

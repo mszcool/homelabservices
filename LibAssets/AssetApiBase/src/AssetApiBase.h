@@ -2,6 +2,7 @@
 #define MSZ_ASSETAPIBASE
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 #include "SecretHandler.h"
 #include "AssetApiBaseData.h"
@@ -49,6 +50,7 @@ protected:
     bool authorize();
     void performAuthorizedAction(std::function<CoreHandlerResponse()> action);
     bool validateAuthorizationToken(int timestamp, String token, String signature);
+    String getErrorJsonDocument(int errorCode, String errorTitle, String errorMessage);
 
     /*
      * Web API Handler Methods provided to all derived implementations.
@@ -73,6 +75,7 @@ protected:
 private:
     // Private helper methods.
     bool getMetadataParams(AssetMetadataParams &metadataParams);
+    String getMetadataJson(String status, AssetMetadataParams &params);
 };
 
 #endif // MSZ_ASSETAPIBASE

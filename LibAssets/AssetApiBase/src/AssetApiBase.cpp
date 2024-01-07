@@ -152,6 +152,19 @@ bool MszAssetApiBase::validateAuthorizationToken(int timestamp, String token, St
     }
 }
 
+String MszAssetApiBase::getErrorJsonDocument(int errorCode, String errorTitle, String errorMessage)
+{
+    JsonDocument errDoc;
+
+    errDoc["errorCode"] = errorCode;
+    errDoc["errorTitle"] = errorTitle;
+    errDoc["details"] = errorMessage;
+
+    String errJsonStr;
+    serializeJsonPretty(errDoc, errJsonStr);
+    return errJsonStr;
+}
+
 void MszAssetApiBase::handleGetInfo()
 {
     Serial.println("Asset API - handleGetInfo - enter");
@@ -162,12 +175,8 @@ void MszAssetApiBase::handleGetInfo()
         CoreHandlerResponse response;
         response.statusCode = HTTP_OK_CODE;
         response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
-        // TODO: update this to ArduinoJson as library before making additional API methods.
-        response.returnContent = "{\n"
-                                 "  \"status\": \"running\",\n"
-                                 "  \"sensorName\": \"" + String(metadata.sensorName) + "\",\n"
-                                 "  \"sensorLocation\": \"" + String(metadata.sensorLocation) + "\"\n"
-                                 "}";
+        response.returnContent = this->getMetadataJson("running", metadata);
+
         return response;
     });
     Serial.println("Asset API - handleGetInfo - exit");
@@ -186,8 +195,8 @@ void MszAssetApiBase::handleUpdateInfo()
 
             CoreHandlerResponse response;
             response.statusCode = HTTP_BAD_REQUEST_CODE;
-            response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-            response.returnContent = "Bad Request";
+            response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+            response.returnContent = this->getErrorJsonDocument(HTTP_BAD_REQUEST_CODE, "BadRequest", "You provided invalid parameters for the Switch Information!");
             
             Serial.println("Asset API - handleUpdateInfo - exit");
             return response;
@@ -198,8 +207,8 @@ void MszAssetApiBase::handleUpdateInfo()
 
         CoreHandlerResponse response;
         response.statusCode = HTTP_OK_CODE;
-        response.contentType = HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
-        response.returnContent = "UPDATED";
+        response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+        response.returnContent = this->getMetadataJson("updated", metadataParams);
         return response;
     });
     Serial.println("Asset API - handleUpdateInfo - exit");
@@ -228,4 +237,15 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
     Serial.println("Asset API - getMetadataParams - sensorLocation = " + String(metadataParams.sensorLocation));
     Serial.println("Asset API - getMetadataParams - exit");
     return true;
+}
+
+String MszAssetApiBase::getMetadataJson(String status, AssetMetadataParams &params)
+{
+    String jsonResp;
+    JsonDocument responseDoc;
+    responseDoc["status"] = status;
+    responseDoc["sensorName"] = params.sensorName;
+    responseDoc["sensorLocation"] = params.sensorLocation;
+    serializeJsonPretty(responseDoc, jsonResp);
+    return jsonResp;
 }
