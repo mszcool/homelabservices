@@ -12,4 +12,4 @@ switchFile=$3
 python3 $pythonScriptPath/callRadioPlug.py --secret "$secretKey" \
                                            --ip "$switchIp" \
                                            applyconfig \
-                                           --applyconfig "$switchFile"
+                                           --file "$switchFile"
