@@ -8,7 +8,6 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/src/personal/homelabservices/LibAssets/include",
                 "C:/src/personal/homelabservices/LibAssets/src",
                 "C:/src/personal/homelabservices/LibAssets/.pio/libdeps/libassets-nodemcu-32s/Time",
                 "C:/src/personal/homelabservices/LibAssets/.pio/libdeps/libassets-nodemcu-32s/WiFiManager",
@@ -244,7 +243,6 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/src/personal/homelabservices/LibAssets/include",
                     "C:/src/personal/homelabservices/LibAssets/src",
                     "C:/src/personal/homelabservices/LibAssets/.pio/libdeps/libassets-nodemcu-32s/Time",
                     "C:/src/personal/homelabservices/LibAssets/.pio/libdeps/libassets-nodemcu-32s/WiFiManager",
@@ -479,7 +477,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=60111",
+                "PLATFORMIO=60113",
                 "ARDUINO_NodeMCU_32S",
                 "ESP32",
                 "HAVE_CONFIG_H",
@@ -487,7 +485,7 @@
                 "UNITY_INCLUDE_CONFIG_H",
                 "WITH_POSIX",
                 "_GNU_SOURCE",
-                "IDF_VER=\"v4.4.5\"",
+                "IDF_VER=\"v4.4.6-dirty\"",
                 "ESP_PLATFORM",
                 "_POSIX_READER_WRITER_LOCKS",
                 "ARDUINO_ARCH_ESP32",

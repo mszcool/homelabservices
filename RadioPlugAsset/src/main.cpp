@@ -1,4 +1,5 @@
 #include "SecretHandler.h"
+#include "AssetUtilWifi.h"
 #include <Arduino.h>
 #include <Preferences.h>
 
@@ -15,12 +16,6 @@
 
 const char *WIFI_HOST_NAME = "mszSwitchServer";
 const char *WIFI_NETWORK_NAME = "mszIoTConfigWiFi";
-const int WIFI_NETWORK_TIMEOUT_SECONDS = 300;
-const int WIFI_CONFIG_NETWORK_TIMEOUT_SECONDS = 300;
-const int WIFI_NETWORK_MIN_SIGNAL_QUALITY = 8;
-const IPAddress WIFI_NETWORK_STATIC_IP(10, 0, 1, 99);
-const IPAddress WIFI_NETWORK_STATIC_GATEWAY_IP(10, 0, 1, 1);
-const IPAddress WIFI_NETWORK_STATIC_SUBNET_MASK(255, 255, 255, 0);
 const char *SECRET_KEY_PARAM_NAME = "secretKeyUx";
 const char *SECRET_KEY_PARAM_DISPLAYNAME = "Secret Key for Authorization (empty = disabled)";
 const char *SECRET_KEY_DEFAULT_VALUE = "yourSecret123!here";
@@ -35,8 +30,6 @@ MszSwitchApiEsp32 switchServer(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, 80);
 MszSwitchApiEsp8266 switchServer(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, 80);
 #endif
 
-void setupWifi(MszSecretHandler *secretHandler);
-
 void setup()
 {
   // Start the serial logger
@@ -50,7 +43,17 @@ void setup()
   MszSecretHandler *secretHandler = new MszSecretHandler();
 
   // Next, start the WifiManager
-  setupWifi(secretHandler);
+  setupWifi(WIFI_HOST_NAME,
+            WIFI_NETWORK_NAME,
+            SECRET_KEY_PARAM_NAME,
+            SECRET_KEY_PARAM_DISPLAYNAME,
+            SECRET_KEY_DEFAULT_VALUE,
+            PREFERENCES_NAMESPACE,
+            MszSwitchWebApi::HTTP_AUTH_SECRET_ID,
+            secretHandler,
+            &preferences,
+            &wifiManager,
+            &WiFi);
 
   // After WiFi was set-up, we can configure the web server.
   switchServer.begin(secretHandler);
@@ -60,63 +63,4 @@ void loop()
 {
   // put your main code here, to run repeatedly:
   switchServer.loop();
-}
-
-/// @brief Offers a configuration WiFi or connects to a known network
-void setupWifi(MszSecretHandler *secretHandler)
-{
-  // Explicitly set mode, esp defaults to STA+AP
-  WiFi.mode(WIFI_STA);
-#if defined(ESP32)
-  WiFi.setHostname(WIFI_HOST_NAME);
-#elif defined(ESP8266)
-  WiFi.hostname(WIFI_HOST_NAME);
-#endif
-
-  // Get the secret key from preferences if it is available
-  String secretKey = preferences.getString(SECRET_KEY_PARAM_NAME, SECRET_KEY_DEFAULT_VALUE);
-
-  // Set configuration settings for WiFi Manager
-  WiFiManagerParameter secretKeyUiParameter(SECRET_KEY_PARAM_NAME, SECRET_KEY_PARAM_DISPLAYNAME, secretKey.c_str(), 20);
-  wifiManager.addParameter(&secretKeyUiParameter);
-  wifiManager.setTimeout(WIFI_NETWORK_TIMEOUT_SECONDS);                    // Timeout in seconds
-  wifiManager.setConfigPortalTimeout(WIFI_CONFIG_NETWORK_TIMEOUT_SECONDS); // Timeout in seconds
-  wifiManager.setMinimumSignalQuality(WIFI_NETWORK_MIN_SIGNAL_QUALITY);    // Signal quality in %
-  wifiManager.setAPStaticIPConfig(WIFI_NETWORK_STATIC_IP, WIFI_NETWORK_STATIC_GATEWAY_IP, WIFI_NETWORK_STATIC_SUBNET_MASK);
-  // wifiManager.setSTAStaticIPConfig(WIFI_NETWORK_STATIC_IP, WIFI_NETWORK_STATIC_GATEWAY_IP, WIFI_NETWORK_STATIC_SUBNET_MASK);
-  wifiManager.setDebugOutput(true);
-  // Now, let's connect to the previously saved WiFi, or start the
-  // configuration WiFi. This is encapsulated in WifIManager's autoConnect() method.
-  if (wifiManager.autoConnect(WIFI_NETWORK_NAME, secretKey.c_str()))
-  {
-    Serial.println("Connected to WiFi!");
-    Serial.println(WiFi.SSID());
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    // If we are connected to configuration WiFi, we can read the secret key from the UI parameter.
-    Serial.println("Getting secret key parameter...");
-    Serial.println("Secret key parameter length: ");
-    Serial.println(secretKeyUiParameter.getValueLength());
-    Serial.println("Saving secret key...");
-    if(secretKeyUiParameter.getValueLength() > 0)
-    {
-      if(secretKey.equals(secretKeyUiParameter.getValue()) == false)
-      {
-        Serial.println("Secret key changed, saving new value...");
-        preferences.putString(SECRET_KEY_PARAM_NAME, secretKeyUiParameter.getValue());
-      }
-      secretHandler->setSecret(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, secretKeyUiParameter.getValue(), secretKeyUiParameter.getValueLength());
-    }
-    Serial.println("Secret key saved!");
-  }
-  else
-  {
-    Serial.println("Failed to connect to WiFi, timed out with both, previously connected WiFi and the access point WiFi!");
-    delay(3000);
-    // Reset and try again, or maybe put it to deep sleep
-    ESP.restart();
-    delay(5000);
-  }
-  Serial.println("----------");
 }
