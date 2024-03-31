@@ -16,13 +16,19 @@ public:
     MszDepthSensorRepository();
 
     static constexpr const char *DEPTH_SENSOR_FILENAME_PREFIX = "/depth";
+    static constexpr const char *DEPTH_SENSOR_CONFIG_FILENAME = "/sensorConfig";
 
-    DepthSensorConfig loadDepthSensorConfig(String depthSensorName);
+    DepthSensorConfig loadDepthSensorConfig();
     bool saveDepthSensorConfig(DepthSensorConfig depthSensorConfig);
 
     DepthSensorState loadDepthSensorState();
-    bool addOrUpdateMeasurement(DepthSensorMeasurement measurement);
+    bool addMeasurement(DepthSensorMeasurement measurement);
+    bool setMeasurementRetrieved(DepthSensorMeasurement measurement);
     bool purgeMeasurements();
+
+private:
+    void purgeSingleMeasurement(int index);
+    void purgeAllMeasurements();
 };
 
 #endif // DEPTHSENSORREPOSITORY
