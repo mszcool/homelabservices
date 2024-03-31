@@ -20,6 +20,7 @@
 /// @brief Configuration settings for the Depth Sensor
 /// @details Defines the interval in seconds between measurements and the number of measurements to keep before purging.
 struct DepthSensorConfig {
+    bool isDefault;
     int measureIntervalInSeconds;
     int measurementsToKeepUntilPurge;
 };
@@ -35,6 +36,7 @@ struct DepthSensorMeasurement {
 /// @brief State of the Depth Sensor with a maximum number of measurements
 /// @details Defines the measurements that have been taken by the Depth Sensor.
 struct DepthSensorState {
+    int measurementCount;
     DepthSensorMeasurement measurements[MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE];
 };
 

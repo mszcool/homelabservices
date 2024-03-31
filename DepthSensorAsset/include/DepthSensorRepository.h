@@ -23,7 +23,7 @@ public:
 
     DepthSensorState loadDepthSensorState();
     bool addMeasurement(DepthSensorMeasurement measurement);
-    bool setMeasurementRetrieved(DepthSensorMeasurement measurement);
+    bool setMeasurementRetrieved(int index);
     bool purgeMeasurements();
 
 private:

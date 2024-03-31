@@ -14,8 +14,8 @@ class MszDepthSensorApi
 : public MszAssetApiBase
 {
 public:
-    MszDepthSensorApi();
-    MszDepthSensorApi(short secretId, int serverPort);
+    MszDepthSensorApi(MszDepthSensorRepository *depthRepository);
+    MszDepthSensorApi(MszDepthSensorRepository *depthRepository, short secretId, int serverPort);
 
     static constexpr const char *API_ENDPOINT_DEPTH_SENSOR_CONFIG = "/config";
     static constexpr const char *API_ENDPOINT_DEPTH_SENSOR_GETMEASUREMENTS = "/measurements";
@@ -24,7 +24,8 @@ public:
     static constexpr const char *API_PARAM_CONFIG_MEASUREMENTS_TOKEEP = "measurementstokeep";
 
 protected:
-    MszDepthSensorRepository depthSensorRepository;
+    WebServer server;
+    MszDepthSensorRepository *depthSensorRepository = NULL;
 
     /*
      * The configuration method is overridden by the specific API servers such as this DepthSensorApi
@@ -43,6 +44,7 @@ protected:
     /*
      * Overrides for the actual web server handling methods 
      */
+    virtual void beginServe() override;
     virtual void handleClient() override;
     virtual void registerGetEndpoint(String endPoint, std::function<void()> handler) override;
     virtual void registerPostEndpoint(String endPoint, std::function<void()> handler) override;

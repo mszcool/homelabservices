@@ -25,6 +25,7 @@ DepthSensorConfig MszDepthSensorRepository::loadDepthSensorConfig()
     else
     {
         Serial.println("DepthSensorRepository::loadDepthSensorConfig - failed to open file");
+        depthSensorConfig.isDefault = true;
         depthSensorConfig.measureIntervalInSeconds = DEFAULT_MEASURE_INTERVAL_IN_SECONDS;
         depthSensorConfig.measurementsToKeepUntilPurge = MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE;
     }
@@ -68,38 +69,36 @@ bool MszDepthSensorRepository::addMeasurement(DepthSensorMeasurement measurement
     Serial.println("DepthSensorRepository::addOrUpdateMeasurement - enter");
 
     bool succeeded = false;
-    for (int i = 0; i < MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE; i++)
+
+    if (inMemoryState.measurementCount >= MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE)
     {
-        if (inMemoryState.measurements[i].measurementTime == -1)
-        {
-            inMemoryState.measurements[i].measurementInCm = measurement.measurementInCm;
-            inMemoryState.measurements[i].measurementTime = measurement.measurementTime;
-            inMemoryState.measurements[i].hasBeenRetrieved = false;
-            succeeded = true;
-            break;
-        }
+        Serial.println("DepthSensorRepository::addOrUpdateMeasurement - max measurements reached, purging");
+        this->purgeAllMeasurements();
+        inMemoryState.measurementCount = 0;
     }
+
+    // Now store the values in the new target measurement.
+    inMemoryState.measurements[inMemoryState.measurementCount].measurementInCm = measurement.measurementInCm;
+    inMemoryState.measurements[inMemoryState.measurementCount].measurementTime = measurement.measurementTime;
+    inMemoryState.measurements[inMemoryState.measurementCount].hasBeenRetrieved = false;
+    inMemoryState.measurementCount++;
 
     Serial.println("DepthSensorRepository::addOrUpdateMeasurement - exit");
     return succeeded;
 }
 
-bool MszDepthSensorRepository::setMeasurementRetrieved(DepthSensorMeasurement measurement)
+bool MszDepthSensorRepository::setMeasurementRetrieved(int index)
 {
-    Serial.println("DepthSensorRepository::addOrUpdateMeasurement - enter");
+    Serial.println("DepthSensorRepository::setMeasurementRetrieved - enter");
 
     bool succeeded = false;
-    for (int i = 0; i < MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE; i++)
+    if (index >= 0 && index < MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE)
     {
-        if (inMemoryState.measurements[i].measurementTime == measurement.measurementTime)
-        {
-            inMemoryState.measurements[i].hasBeenRetrieved = measurement.hasBeenRetrieved;
-            succeeded = true;
-            break;
-        }
+        inMemoryState.measurements[index].hasBeenRetrieved = true;
+        succeeded = true;
     }
 
-    Serial.println("DepthSensorRepository::addOrUpdateMeasurement - exit");
+    Serial.println("DepthSensorRepository::setMeasurementRetrieved - exit");
     return succeeded;
 }
 
@@ -118,6 +117,7 @@ void MszDepthSensorRepository::purgeSingleMeasurement(int index)
 
 void MszDepthSensorRepository::purgeAllMeasurements()
 {
+    inMemoryState.measurementCount = 0;
     for(int i=0; i < MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE; i++)
     {
         this->purgeSingleMeasurement(i);
