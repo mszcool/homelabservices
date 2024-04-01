@@ -61,3 +61,44 @@ def call_endpoint(switch_ip, headers, operation, queryStr, max_retries=15, retry
                 raise
 
     return response
+
+#
+# Calls the endpoint for getting metadata from the switch.
+#
+def get_metadata_from_switch(switch_ip, headers):
+    logIfTurnedOn("[Metadata] Getting metadata from the switch...")
+    response = call_endpoint(switch_ip, headers, 'info', {})
+    logIfTurnedOn("[Metadata] Response status code: {}".format(response.status_code))
+    logIfTurnedOn("[Metadata] Response body:")
+    print(response.text)
+
+    if response.status_code == 200:
+        lines = response.text.split('\n')
+        info_dict = {}
+        for line in lines:
+            parts = line.split('=')
+            if len(parts) == 2:
+                key = parts[0]
+                value = parts[1]
+                info_dict[key] = value
+        status = info_dict['status'] if 'status' in info_dict else None
+        sensor_name = info_dict['sensorName'] if 'sensorName' in info_dict else None
+        sensor_location = info_dict['sensorLocation'] if 'sensorLocation' in info_dict else None
+
+        return True, status, sensor_name, sensor_location
+    else:
+        return False, None, None, None
+    
+#
+# Registers a new switch.
+#
+def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
+    logIfTurnedOn("[Metadata Update] Setting sensor name and location...")
+    response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location), verb='PUT')
+    logIfTurnedOn("[Metadata Update] Response status code: {}".format(response.status_code))
+    logIfTurnedOn("[Metadata Update] Response body:")
+    print(response.text)
+    if response.status_code == 200:
+        return True
+    else:
+        return False

@@ -7,47 +7,6 @@ import assetRadioPlugEntities
 import assetClientUtil as mszutl
 
 #
-# Calls the endpoint for getting metadata from the switch.
-#
-def get_metadata_from_switch(switch_ip, headers):
-    mszutl.logIfTurnedOn("[Metadata] Getting metadata from the switch...")
-    response = mszutl.call_endpoint(switch_ip, headers, 'info', {})
-    mszutl.logIfTurnedOn("[Metadata] Response status code: {}".format(response.status_code))
-    mszutl.logIfTurnedOn("[Metadata] Response body:")
-    print(response.text)
-
-    if response.status_code == 200:
-        lines = response.text.split('\n')
-        info_dict = {}
-        for line in lines:
-            parts = line.split('=')
-            if len(parts) == 2:
-                key = parts[0]
-                value = parts[1]
-                info_dict[key] = value
-        status = info_dict['status'] if 'status' in info_dict else None
-        sensor_name = info_dict['sensorName'] if 'sensorName' in info_dict else None
-        sensor_location = info_dict['sensorLocation'] if 'sensorLocation' in info_dict else None
-
-        return True, status, sensor_name, sensor_location
-    else:
-        return False, None, None, None
-
-#
-# Registers a new switch.
-#
-def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
-    mszutl.logIfTurnedOn("[Metadata Update] Setting sensor name and location...")
-    response = mszutl.call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location), verb='PUT')
-    mszutl.logIfTurnedOn("[Metadata Update] Response status code: {}".format(response.status_code))
-    mszutl.logIfTurnedOn("[Metadata Update] Response body:")
-    print(response.text)
-    if response.status_code == 200:
-        return True
-    else:
-        return False
-
-#
 # Registers a new switch with the switch-sensor.
 #
 def update_switch_data(switch_ip, headers, switch_name, on_command, off_command, is_tri_state, protocol, pulseLength, repeatTransmit):
@@ -234,12 +193,12 @@ def main():
     # Now, you can access the arguments like this:
     operation = args.operation
     if operation == 'info':
-        result, status, sensor_name, sensor_location = get_metadata_from_switch(args.ip, headers)
+        result, status, sensor_name, sensor_location = mszutl.get_metadata_from_switch(args.ip, headers)
         if not result:
             mszutl.logIfTurnedOn("Failed to get metadata. Exiting...")
             SystemExit(1)
     elif operation == 'updateinfo':
-        result = update_metadata_of_switch(args.ip, headers, args.name, args.location)
+        result = mszutl.update_metadata_of_switch(args.ip, headers, args.name, args.location)
         if not result:
             mszutl.logIfTurnedOn("Failed to update metadata. Exiting...")
             SystemExit(1)
