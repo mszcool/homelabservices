@@ -25,6 +25,12 @@ DepthSensorConfig MszDepthSensorRepository::loadDepthSensorConfig()
 {
     Serial.println("DepthSensorRepository::loadDepthSensorConfig - enter");
 
+    if(!SPIFFS.begin())
+    {
+        Serial.println("Failed to mount file system, aborting...");
+        return inMemoryState.currentConfig;
+    }
+
     Serial.println("DepthSensorRepository::loadDepthSensorConfig - lastConfigTimeRead = " + String(inMemoryState.lastConfigTimeRead));
     Serial.println("DepthSensorRepository::loadDepthSensorConfig - lastConfigTimeWrite = " + String(inMemoryState.lastConfigTimeWrite));
 
@@ -68,6 +74,12 @@ DepthSensorConfig MszDepthSensorRepository::loadDepthSensorConfig()
 bool MszDepthSensorRepository::saveDepthSensorConfig(DepthSensorConfig depthSensorConfig)
 {
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - enter");
+
+    if(!SPIFFS.begin())
+    {
+        Serial.println("Failed to mount file system, aborting...");
+        return false;
+    }
 
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - measureIntervalInSeconds = " + String(depthSensorConfig.measureIntervalInSeconds));
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - measurementsToKeepUntilPurge = " + String(depthSensorConfig.measurementsToKeepUntilPurge));

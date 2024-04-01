@@ -17,7 +17,7 @@ class DepthSensorConfig:
         json_dict = json.loads(json_str)
         return cls(
             json_dict['isDefault'],
-            json_dict['measureIntervalInSeconds'],
+            json_dict['measurementIntervalSeconds'],
             json_dict['measurementsToKeep']
         )
 

@@ -14,6 +14,9 @@ def get_depth_sensor_config(sensor_ip, headers):
     response = mszutl.call_endpoint(sensor_ip, headers, 'config', '', verb='GET')
     # Parse the response
     if response.status_code == 200:
+        mszutl.logIfTurnedOn("[Depth Config] Response status code: {}".format(response.status_code))
+        mszutl.logIfTurnedOn("[Depth Config] Response body:")
+        print(response.text)
         config = dentities.DepthSensorConfig.from_json(response.text)
         return True, config
     else:
@@ -83,6 +86,7 @@ def purge_depth_sensor_measurements(sensor_ip, headers):
 #
     
 def main():
+    print("Asset Depth Sensor Management Utility")
     # Create the top-level parser
     parser = argparse.ArgumentParser(description='Manage the depth sensor')
     parser.add_argument('--secret', required=False, help='The secret key used for the authentication')
@@ -114,9 +118,9 @@ def main():
     if args.operation != 'help' and (args.secret is None or args.ip is None):
         print("The --secret and --ip arguments are required for all operations.")
         SystemExit(1)
-    else:
+    elif args.operation == 'help':
         args.secret = ""
-        
+
     # Create the token and the signature since it will be required for all operations
     token_timestamp_str = str(int(time.time()))
     secret_key = args.secret
@@ -139,7 +143,7 @@ def main():
     # Now let's perform the operation
     operation = args.operation
     if operation == 'info':
-        result, config = mszutl.get_metadata_from_switch(args.ip, headers)
+        result = mszutl.get_metadata_from_switch(args.ip, headers)
         if not result:
             print("Failed to get the depth sensor metadata.")
             SystemExit(1)
