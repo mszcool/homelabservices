@@ -187,7 +187,8 @@ void MszDepthSensorApi::handleGetDepthSensorMeasurements()
         Serial.println("Depth Sensor API handleGetDepthSensorMeasurements - authorized, performing action");
         CoreHandlerResponse response;
 
-        DepthSensorState state = this->depthSensorRepository->loadDepthSensorState();
+        DepthSensorState state;
+        state = this->depthSensorRepository->loadDepthSensorState();
         response.statusCode = HTTP_OK_CODE;
         response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
 

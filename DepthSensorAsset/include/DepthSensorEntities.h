@@ -15,7 +15,7 @@
 #define MAX_MEASURE_INTERVAL_IN_SECONDS 32767
 
 #define MIN_MEASUREMENTS_TO_KEEP_UNTIL_PURGE 10
-#define MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE 3000
+#define MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE 100
 
 /// @brief Configuration settings for the Depth Sensor
 /// @details Defines the interval in seconds between measurements and the number of measurements to keep before purging.
