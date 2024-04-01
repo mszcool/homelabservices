@@ -198,7 +198,7 @@ void MszDepthSensorApi::handleGetDepthSensorMeasurements()
         for (int i = 0; i < state.measurementCount; i++)
         {
             JsonObject measurement = measurementsArray.add<JsonObject>();
-            measurement["time"] = state.measurements[i].measurementTime;
+            measurement["measureTime"] = state.measurements[i].measurementTime;
             measurement["centimeters"] = state.measurements[i].measurementInCm;
             measurement["retrievedBefore"] = !state.measurements[i].hasBeenRetrieved;
             this->depthSensorRepository->setMeasurementRetrieved(i);

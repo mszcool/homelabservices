@@ -25,10 +25,10 @@ class DepthSensorConfig:
 # Used to describe a single measurement.
 #
 class DepthSensorMeasurement:
-    def __init__(self, measurementTime, measurementInCm, hasBeenRetrieved):
-        self.measurementTime = measurementTime
-        self.measurementInCm = measurementInCm
-        self.hasBeenRetrieved = hasBeenRetrieved
+    def __init__(self, measureTime, centimeters, retrievedBefore):
+        self.measureTime = measureTime
+        self.centimeters = centimeters
+        self.retrievedBefore = retrievedBefore
 
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -37,9 +37,9 @@ class DepthSensorMeasurement:
     def from_json(cls, json_str):
         json_dict = json.loads(json_str)
         return cls(
-            json_dict['measurementTime'],
-            json_dict['measurementInCm'],
-            json_dict['hasBeenRetrieved']
+            json_dict['measureTime'],
+            json_dict['centimeters'],
+            json_dict['retrievedBefore']
         )
 
 #
