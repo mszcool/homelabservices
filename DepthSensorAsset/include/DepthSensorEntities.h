@@ -36,8 +36,15 @@ struct DepthSensorMeasurement {
 /// @brief State of the Depth Sensor with a maximum number of measurements
 /// @details Defines the measurements that have been taken by the Depth Sensor.
 struct DepthSensorState {
+    // Measurement caching items. These are not stored to the filesystem
+    // to avoid stressing the sensors flash memory too much. Increases lifetime.
     int measurementCount;
     DepthSensorMeasurement measurements[MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE];
+
+    // Configuration management to avoid reading configuration from file if nothing has changed.
+    DepthSensorConfig currentConfig;
+    time_t lastConfigTimeRead;
+    time_t lastConfigTimeWrite;
 };
 
 #endif // DEPTHSENSORENTITIES
