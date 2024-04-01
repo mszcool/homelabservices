@@ -3,7 +3,7 @@ import argparse
 import secrets
 from urllib.parse import urlunparse, urlencode, quote
 
-import radioPlugEntities
+import assetRadioPlugEntities
 import assetClientUtil as mszutl
 
 #
@@ -109,7 +109,7 @@ def apply_configuration(switch_ip, headers, config_file_name):
             json_str = f.read()
             try:
                 mszutl.logIfTurnedOn("[Apply config] Loading configuration data...")
-                config = radioPlugEntities.RadioPlugCollection.from_json(json_str)
+                config = assetRadioPlugEntities.RadioPlugCollection.from_json(json_str)
                 mszutl.logIfTurnedOn("[Apply config] Data loaded, now applying to switch...")
                 # Start with updating the metadata / info
                 result = update_metadata_of_switch(switch_ip, headers, config.name, config.location)
@@ -142,7 +142,7 @@ def turn_switches_on_or_off_by_config(switch_ip, headers, config_file_name, turn
             json_str = f.read()
             try:
                 mszutl.logIfTurnedOn("[Turn switches on/off] Loading configuration data...")
-                config = radioPlugEntities.RadioPlugCollection.from_json(json_str)
+                config = assetRadioPlugEntities.RadioPlugCollection.from_json(json_str)
                 mszutl.logIfTurnedOn("[Turn switches on/off] Data loaded, now turning switches {}...".format('on' if turn_on else 'off'))
                 # Now, turn on or off each switch part of the config
                 for sw in config.plugs:

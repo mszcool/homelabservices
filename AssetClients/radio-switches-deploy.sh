@@ -9,7 +9,7 @@ switchIp=$2
 switchFile=$3
 
 # Set the metadata for the switch
-python3 $pythonScriptPath/callRadioPlug.py --secret "$secretKey" \
-                                           --ip "$switchIp" \
-                                           applyconfig \
-                                           --file "$switchFile"
+python3 $pythonScriptPath/assetRadioPlug.py --secret "$secretKey" \
+                                            --ip "$switchIp" \
+                                            applyconfig \
+                                            --file "$switchFile"

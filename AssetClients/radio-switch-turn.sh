@@ -16,11 +16,11 @@ fi
 
 # Now let's call the corresponding endpoint for turning the switch on or off.
 echo "Turning switch $switchName $swtichOn..."
-python3 $pythonScriptPath/callRadioPlug.py --secret "$secretKey" \
-                                           --ip "$switchIp" \
-                                           switch \
-                                           --name "$switchName" \
-                                           --status "$switchOn"
+python3 $pythonScriptPath/assetRadioPlug.py --secret "$secretKey" \
+                                            --ip "$switchIp" \
+                                            switch \
+                                            --name "$switchName" \
+                                            --status "$switchOn"
 
 if [ $? -eq 0 ]; then
     echo "Switch $switchName turned $switchOn successfully."
