@@ -112,6 +112,12 @@ def main():
     update_config_parser.add_argument('--interval', type=int, help='The interval in seconds between measurements')
     update_config_parser.add_argument('--keep', type=int, help='The number of measurements to keep')
 
+    # Create the parser for the depth sensor measurements
+    get_measurements_parser = subparsers.add_parser('measurements', help='Get the measurements from the depth sensor')
+
+    # Create the parser for purging the depth sensor measurements
+    purge_measurements_parser = subparsers.add_parser('purge', help='Purge the measurements from the depth sensor')
+
     # Parse the arguments
     args = parser.parse_args()
 
@@ -162,6 +168,16 @@ def main():
         result = update_depth_sensor_config(args.ip, headers, config)
         if not result:
             print("Failed to update the depth sensor configuration.")
+            SystemExit(1)
+    elif operation == 'measurements':
+        result, measurements = get_depth_sensor_measurements(args.ip, headers)
+        if not result:
+            print("Failed to get the depth sensor measurements.")
+            SystemExit(1)
+    elif operation == 'purge':
+        result = purge_depth_sensor_measurements(args.ip, headers)
+        if not result:
+            print("Failed to purge the depth sensor measurements.")
             SystemExit(1)
     elif operation == 'help':
         parser.print_help()
