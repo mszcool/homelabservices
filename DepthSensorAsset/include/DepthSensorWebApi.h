@@ -17,6 +17,8 @@ public:
     MszDepthSensorApi(MszDepthSensorRepository *depthRepository);
     MszDepthSensorApi(MszDepthSensorRepository *depthRepository, short secretId, int serverPort);
 
+    static const int HTTP_AUTH_SECRET_ID = 0;
+
     static constexpr const char *API_ENDPOINT_DEPTH_SENSOR_CONFIG = "/config";
     static constexpr const char *API_ENDPOINT_DEPTH_SENSOR_GETMEASUREMENTS = "/measurements";
 
