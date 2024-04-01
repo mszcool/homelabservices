@@ -21,24 +21,41 @@ const char *PREFERENCES_NAMESPACE = "msz-depthswsrv";
 
 WiFiManager wifiManager;
 Preferences preferences;
-MszDepthSensorRepository depthRepository;
-MszDepthSensorApi depthSensorApi(&depthRepository, MszDepthSensorApi::HTTP_AUTH_SECRET_ID, 80);
+DepthSensorConfig depthSensorConfig;
+MszSecretHandler *secretHandler;
+MszDepthSensorRepository *depthRepository;
+MszDepthSensorApi *depthSensorApi;
 
 time_t lastMeasurementTime = 0;
 
-int createMeasurement()
+float createMeasurement()
 {
   // Send the signal. Start with turning off the sensor for a few microseconds to avoid interference.
   // Then send the signal and wait for the response to calculate the distance.
   digitalWrite(ULTRASOUND_SENSOR_SEND_PIN, LOW);
-  delayMicroseconds(10);
+  delay(5);
   digitalWrite(ULTRASOUND_SENSOR_SEND_PIN, HIGH);
-  delayMicroseconds(10);
+  delayMicroseconds(3);
   digitalWrite(ULTRASOUND_SENSOR_SEND_PIN, LOW);
 
+  while (digitalRead(ULTRASOUND_SENSOR_RECEIVE_PIN) == LOW)
+  {
+    // Do nothing, wait for the pulse to come back.
+  }
+
+  unsigned long startTime = micros();
+
+  while (digitalRead(ULTRASOUND_SENSOR_RECEIVE_PIN) == HIGH)
+  {
+    // Do nothing, wait for the pulse to end.
+  }
+
+  unsigned long endTime = micros();
+
   // Receive the signal on the receiving sensor.
-  int duration = pulseIn(ULTRASOUND_SENSOR_RECEIVE_PIN, HIGH);
-  int distanceInCm = (duration / 2) * ULTRASOUND_CENTIMETERS_PER_MICROSECOND;
+  // replaced due to accuracy issues: int duration = pulseIn(ULTRASOUND_SENSOR_RECEIVE_PIN, HIGH);
+
+  float distanceInCm = ((endTime - startTime) / 2) * ULTRASOUND_CENTIMETERS_PER_MICROSECOND;
 
   return distanceInCm;
 }
@@ -51,8 +68,13 @@ void setup() {
   // Open preferences for the namespace of this app
   preferences.begin(PREFERENCES_NAMESPACE, false);
 
-  // Creating a secrets handler and repository
-  MszSecretHandler *secretHandler = new MszSecretHandler();
+  // Creating the required instances of the core implementation objects.
+  secretHandler = new MszSecretHandler();
+  depthRepository = new MszDepthSensorRepository();
+  depthSensorApi = new MszDepthSensorApi(depthRepository, MszDepthSensorApi::HTTP_AUTH_SECRET_ID, 80);
+
+  // Load the settings for the depth sensor
+  //depthSensorConfig = depthRepository.loadDepthSensorConfig();
   
   // Next, start the WifiManager
   setupWifi(WIFI_HOST_NAME,
@@ -80,18 +102,22 @@ void setup() {
   pinMode(ULTRASOUND_SENSOR_RECEIVE_PIN, INPUT);
 
   // Now start the web server
-  depthSensorApi.begin(secretHandler);
+  depthSensorApi->begin(secretHandler);
 }
 
 void loop() {
-
-  // Load the settings for the depth sensor
-  DepthSensorConfig depthSensorConfig = depthRepository.loadDepthSensorConfig();
 
   // Take a senor measurement, but only per defined interval.
   time_t currentTime = now();
   if ( (currentTime - lastMeasurementTime) >= depthSensorConfig.measureIntervalInSeconds)
   {
+    Serial.println("\nTaking a measurement...");
+    Serial.println("Last measurement time: " + String(lastMeasurementTime));
+    Serial.println("Current time: " + String(currentTime));
+
+    // Loading the updated configuration to apply after the next cycle.
+    depthSensorConfig = depthRepository->loadDepthSensorConfig();
+
     // Create the measurement entity.
     DepthSensorMeasurement depthMeasurement;
     depthMeasurement.measurementTime = now();
@@ -100,13 +126,17 @@ void loop() {
     // Take a measurement.
     depthMeasurement.measurementInCm = createMeasurement();
 
+    // Print the measurement
+    Serial.println("-- Measurement time: " + String(depthMeasurement.measurementTime));
+    Serial.println("-- Measurement in cm: " + String(depthMeasurement.measurementInCm));
+    
     // Store the measurement in the repository.
-    depthRepository.addMeasurement(depthMeasurement);
+    depthRepository->addMeasurement(depthMeasurement);
 
     // Update the last measurement time
     lastMeasurementTime = currentTime;
   }
 
   // Then handle the request
-  depthSensorApi.loop();
+  depthSensorApi->loop();
 }

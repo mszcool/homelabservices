@@ -11,7 +11,7 @@
 #define ULTRASOUND_SENSOR_RECEIVE_PIN 22
 
 #define MIN_MEASURE_INTERVAL_IN_SECONDS 1
-#define DEFAULT_MEASURE_INTERVAL_IN_SECONDS (60 * 5)
+#define DEFAULT_MEASURE_INTERVAL_IN_SECONDS 5 //(60 * 5)
 #define MAX_MEASURE_INTERVAL_IN_SECONDS 32767
 
 #define MIN_MEASUREMENTS_TO_KEEP_UNTIL_PURGE 10
@@ -29,7 +29,7 @@ struct DepthSensorConfig {
 /// @details Defines the time of the measurement, the measurement in centimeters, and whether the measurement has been retrieved.
 struct DepthSensorMeasurement {
     unsigned long measurementTime;
-    int measurementInCm;
+    float measurementInCm;
     bool hasBeenRetrieved;
 };
 
