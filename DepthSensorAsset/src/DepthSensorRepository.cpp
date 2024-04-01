@@ -25,45 +25,43 @@ DepthSensorConfig MszDepthSensorRepository::loadDepthSensorConfig()
 {
     Serial.println("DepthSensorRepository::loadDepthSensorConfig - enter");
 
-    if(!SPIFFS.begin())
+    if (!SPIFFS.begin())
     {
-        Serial.println("Failed to mount file system, aborting...");
+        Serial.println("DepthSensorRepository::loadDepthSensorConfig - Failed to mount file system, aborting...");
         return inMemoryState.currentConfig;
     }
 
     Serial.println("DepthSensorRepository::loadDepthSensorConfig - lastConfigTimeRead = " + String(inMemoryState.lastConfigTimeRead));
     Serial.println("DepthSensorRepository::loadDepthSensorConfig - lastConfigTimeWrite = " + String(inMemoryState.lastConfigTimeWrite));
 
-    if (inMemoryState.currentConfig.isDefault)
+    Serial.println("DepthSensorRepository::loadDepthSensorConfig - default configuration still present, loading configuration from file if needed.");
+
+    // First check, if the configuration read is still the same as the configuration written, and if it has ever been read, before.
+    if ((inMemoryState.lastConfigTimeRead != 0) && (inMemoryState.lastConfigTimeRead >= inMemoryState.lastConfigTimeWrite))
     {
-        Serial.println("DepthSensorRepository::loadDepthSensorConfig - default configuration still present, loading configuration from file if needed.");
+        Serial.println("DepthSensorRepository::loadDepthSensorConfig - in-memory configuration is still the same as configuration on file.");
+        return inMemoryState.currentConfig;
+    }
 
-        // First check, if the configuration read is still the same as the configuration written, and if it has ever been read, before.
-        if ((inMemoryState.lastConfigTimeRead != 0) && (inMemoryState.lastConfigTimeRead == inMemoryState.lastConfigTimeWrite))
+    // The configuration is out of sync, or it has never been read before, hence it is worth checking.
+    Serial.println("DepthSensorRepository::loadDepthSensorConfig - configuration is out of sync, or it has never been read before, hence it is worth checking.");
+    bool fileExists = SPIFFS.exists(DEPTH_SENSOR_CONFIG_FILENAME);
+    if (fileExists)
+    {
+        DepthSensorConfig readConfigFromFile;
+        File file = SPIFFS.open(DEPTH_SENSOR_CONFIG_FILENAME, "r");
+        if (file)
         {
-            Serial.println("DepthSensorRepository::loadDepthSensorConfig - in-memory configuration is still the same as configuration on file.");
-            return inMemoryState.currentConfig;
+            file.readBytes((char *)&readConfigFromFile, sizeof(readConfigFromFile));
+            file.close();
+
+            // After successfully reading content from file, updated the in-memory state.
+            inMemoryState.currentConfig = readConfigFromFile;
+            inMemoryState.lastConfigTimeRead = now();
         }
-
-        // The configuration is out of sync, or it has never been read before, hence it is worth checking.
-        bool fileExists = SPIFFS.exists(DEPTH_SENSOR_CONFIG_FILENAME);
-        if (fileExists)
+        else
         {
-            DepthSensorConfig readConfigFromFile;
-            File file = SPIFFS.open(DEPTH_SENSOR_CONFIG_FILENAME, "r");
-            if (file)
-            {
-                file.readBytes((char *)&readConfigFromFile, sizeof(readConfigFromFile));
-                file.close();
-
-                // After successfully reading content from file, updated the in-memory state.
-                inMemoryState.currentConfig = readConfigFromFile;
-                inMemoryState.lastConfigTimeRead = now();
-            }
-            else
-            {
-                Serial.println("DepthSensorRepository::loadDepthSensorConfig - failed to open file");
-            }
+            Serial.println("DepthSensorRepository::loadDepthSensorConfig - failed to open file");
         }
     }
 
@@ -75,9 +73,9 @@ bool MszDepthSensorRepository::saveDepthSensorConfig(DepthSensorConfig depthSens
 {
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - enter");
 
-    if(!SPIFFS.begin())
+    if (!SPIFFS.begin())
     {
-        Serial.println("Failed to mount file system, aborting...");
+        Serial.println("DepthSensorRepository::saveDepthSensorConfig - Failed to mount file system, aborting...");
         return false;
     }
 
@@ -85,7 +83,7 @@ bool MszDepthSensorRepository::saveDepthSensorConfig(DepthSensorConfig depthSens
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - measurementsToKeepUntilPurge = " + String(depthSensorConfig.measurementsToKeepUntilPurge));
 
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - Saving means the configuration is not considered default, anymore!");
-    inMemoryState.currentConfig.isDefault = false;
+    depthSensorConfig.isDefault = false;
 
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - lastConfigTimeRead = " + String(inMemoryState.lastConfigTimeRead));
     Serial.println("DepthSensorRepository::saveDepthSensorConfig - lastConfigTimeWrite = " + String(inMemoryState.lastConfigTimeWrite));
@@ -170,7 +168,7 @@ void MszDepthSensorRepository::purgeSingleMeasurement(int index)
 void MszDepthSensorRepository::purgeAllMeasurements()
 {
     inMemoryState.measurementCount = 0;
-    for(int i=0; i < MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE; i++)
+    for (int i = 0; i < MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE; i++)
     {
         this->purgeSingleMeasurement(i);
     }
