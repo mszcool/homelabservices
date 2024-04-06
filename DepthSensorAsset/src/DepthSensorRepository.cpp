@@ -120,7 +120,7 @@ bool MszDepthSensorRepository::addMeasurement(DepthSensorMeasurement measurement
 
     bool succeeded = false;
 
-    if (inMemoryState.measurementCount >= MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE)
+    if ( (inMemoryState.measurementCount >= MAX_MEASUREMENTS_TO_KEEP_UNTIL_PURGE) || (inMemoryState.measurementCount >= inMemoryState.currentConfig.measurementsToKeepUntilPurge) )
     {
         Serial.println("DepthSensorRepository::addOrUpdateMeasurement - max measurements reached, purging");
         this->purgeAllMeasurements();

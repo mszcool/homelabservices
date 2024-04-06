@@ -1,4 +1,7 @@
+import os
+import sys
 import time
+import datetime
 import argparse
 import secrets
 from urllib.parse import urlunparse, urlencode, quote
@@ -123,7 +126,7 @@ def main():
 
     if args.operation != 'help' and (args.secret is None or args.ip is None):
         print("The --secret and --ip arguments are required for all operations.")
-        SystemExit(1)
+        sys.exit(1)
     elif args.operation == 'help':
         args.secret = ""
 
@@ -152,33 +155,38 @@ def main():
         result = mszutl.get_metadata_from_switch(args.ip, headers)
         if not result:
             print("Failed to get the depth sensor metadata.")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'updateinfo':
         result = mszutl.update_metadata_of_switch(args.ip, headers, args.name, args.location)
         if not result:
             print("Failed to update the depth sensor metadata.")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'config':
         result = get_depth_sensor_config(args.ip, headers)
         if not result:
             print("Failed to get the depth sensor configuration.")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'updateconfig':
         config = dentities.DepthSensorConfig(False, args.interval, args.keep)
         result = update_depth_sensor_config(args.ip, headers, config)
         if not result:
             print("Failed to update the depth sensor configuration.")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'measurements':
         result, measurements = get_depth_sensor_measurements(args.ip, headers)
         if not result:
             print("Failed to get the depth sensor measurements.")
-            SystemExit(1)
+            sys.exit(1)
+        elif os.environ.get('LOGGING') == 'ON':
+            for m in measurements.measurements:
+                measureTime = datetime.datetime.fromtimestamp(m.measureTime)
+                measureTimeFormatted = measureTime.strftime("%Y-%m-%d %H:%M:%S")
+                print("-- Measurement: time = {}, centimeters = {}, retrieved before = {}".format(measureTimeFormatted, m.centimeters, m.retrievedBefore))
     elif operation == 'purge':
         result = purge_depth_sensor_measurements(args.ip, headers)
         if not result:
             print("Failed to purge the depth sensor measurements.")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'help':
         parser.print_help()
         parser.print_usage()
@@ -186,7 +194,7 @@ def main():
         print("Invalid operation: {}".format(operation))
         print("Use the 'help' command to see the available operations.")
         print("Valid operations are: info, updateinfo, config, updateconfig, help")
-        SystemExit(1)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
