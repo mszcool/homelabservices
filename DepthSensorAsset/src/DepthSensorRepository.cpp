@@ -154,6 +154,11 @@ bool MszDepthSensorRepository::setMeasurementRetrieved(int index)
 
 bool MszDepthSensorRepository::purgeMeasurements()
 {
+    // Re-set the last read time and write time such that the config gets read again.
+    inMemoryState.lastConfigTimeRead = 0;
+    inMemoryState.lastConfigTimeWrite = 0;
+
+    // Remove all measurements.
     this->purgeAllMeasurements();
     return true;
 }
