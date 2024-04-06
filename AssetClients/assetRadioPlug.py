@@ -71,7 +71,7 @@ def apply_configuration(switch_ip, headers, config_file_name):
                 config = assetRadioPlugEntities.RadioPlugCollection.from_json(json_str)
                 mszutl.logIfTurnedOn("[Apply config] Data loaded, now applying to switch...")
                 # Start with updating the metadata / info
-                result = update_metadata_of_switch(switch_ip, headers, config.name, config.location)
+                result = mszutl.update_metadata_of_switch(switch_ip, headers, config.name, config.location)
                 if not result:
                     mszutl.logIfTurnedOn("[Apply config] Failed updating metadata, stopping.")
                     return False

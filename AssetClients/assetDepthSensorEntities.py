@@ -1,6 +1,27 @@
 import json
 
 #
+# Used to apply infrastructure as code principles for sensor configuration.
+#
+class DepthSensorInfraConfiguration:
+    def __init__(self, name, location, config):
+        self.name = name
+        self.location = location
+        self.config = config
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+    
+    @classmethod
+    def from_json(cls, json_str):
+        json_dict = json.loads(json_str)
+        return cls(
+            json_dict['name'],
+            json_dict['location'],
+            DepthSensorConfig(**json_dict['config'])
+        )
+
+#
 # Used to retrieve the depth sensor configuration
 #
 class DepthSensorConfig:

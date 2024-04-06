@@ -83,6 +83,35 @@ def purge_depth_sensor_measurements(sensor_ip, headers):
         return True
     else:
         return False
+
+#
+# Apply the configuration from a JSON file to the depth sensor
+#
+def apply_configuration(sensor_ip, headers, file):
+    mszutl.logIfTurnedOn("[Apply Configuration] Applying configuration to the depth sensor...")
+    try:
+        with open(file, 'r') as f:
+            jsonConfig = f.read()
+            try:
+                mszutl.logIfTurnedOn("[Apply Configuration] Parsing configuration...")
+                config = dentities.DepthSensorInfraConfiguration.from_json(jsonConfig)
+                mszutl.logIfTurnedOn("[Apply Configuration] Configuration to apply:")
+                mszutl.logIfTurnedOn(jsonConfig)
+                result = mszutl.update_metadata_of_switch(sensor_ip, headers, config.name, config.location)
+                if not result:
+                    mszutl.logIfTurnedOn("Failed to update the metadata of the sensor.")
+                    return False
+                result = update_depth_sensor_config(sensor_ip, headers, config.config)
+                if not result:
+                    mszutl.logIfTurnedOn("Failed to update the configuration of the sensor.")
+                    return False
+                return True
+            except Exception as e:
+                print("Failed to parse the JSON configuration file: {}".format(e))
+                return False
+    except FileNotFoundError:
+        print("The file {} does not exist.".format(file))
+        return False
     
 #
 # Main function
@@ -123,6 +152,10 @@ def main():
 
     # Create the parser for purging the depth sensor measurements
     purge_measurements_parser = subparsers.add_parser('purge', help='Purge the measurements from the depth sensor')
+
+    # Finally, apply configuration from a configuration JSON file to mimic infra-as-code.
+    apply_config_parser = subparsers.add_parser('applyconfig', help='Apply the configuration from a JSON file to the depth sensor')
+    apply_config_parser.add_argument('--file', required=True, help='The JSON file containing the configuration to apply')
 
     # Parse the arguments
     args = parser.parse_args()
@@ -199,6 +232,11 @@ def main():
         result = purge_depth_sensor_measurements(args.ip, headers)
         if not result:
             print("Failed to purge the depth sensor measurements.")
+            sys.exit(1)
+    elif operation == 'applyconfig':
+        result = apply_configuration(args.ip, headers, args.file)
+        if not result:
+            mszutl.logIfTurnedOn("Failed to apply configuration. Exiting...")
             sys.exit(1)
     elif operation == 'help':
         parser.print_help()
