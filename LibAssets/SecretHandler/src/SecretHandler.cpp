@@ -111,7 +111,13 @@ bool MszSecretHandler::validateTokenSignature(String token, long tokenTimestamp,
 
     bool result = signature.equals(expectedSignatureHex);
     Serial.println("Signature match: " + String(result));
-    result &= (now() - tokenTimestamp <= tokenExpirationSeconds);
+
+    time_t currentTime = now();
+    Serial.println("Current timestamp: " + String(currentTime));
+    Serial.println("Token timestamp: " + String(tokenTimestamp));
+    Serial.println("Token expiration seconds: " + String(tokenExpirationSeconds));
+    Serial.println("Token timestamp and time difference: " + String(currentTime - tokenTimestamp));
+    result &= ((currentTime - tokenTimestamp) <= tokenExpirationSeconds);
     Serial.println("Token expiration match: " + String(result));
 
     Serial.println("Validating token signature - exit.");

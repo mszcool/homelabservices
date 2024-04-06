@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-
+#include <TimeLib.h>
 #include "SecretHandler.h"
 #include "AssetApiBaseData.h"
 
@@ -30,10 +30,18 @@ public:
 
     static constexpr const char *API_ENDPOINT_INFO = "/info";
     static constexpr const char *API_ENDPOINT_UPDATEINFO = "/updateinfo";
+    static constexpr const char *API_ENDPOINT_SETTIME = "/settime";
 
     static constexpr const char *HEADER_AUTHORIZATION = "Authorization";
     static constexpr const char *PARAM_SENSOR_NAME = "name";
     static constexpr const char *PARAM_SENSOR_LOCATION = "location";
+
+    static constexpr const char* PARAM_HOUR = "hour";
+    static constexpr const char* PARAM_MINUTE = "minute";
+    static constexpr const char* PARAM_SECOND = "second";
+    static constexpr const char* PARAM_DAY = "day";
+    static constexpr const char* PARAM_MONTH = "month";
+    static constexpr const char* PARAM_YEAR = "year";
 
     static const int TOKEN_EXPIRATION_SECONDS = 60;
 
@@ -57,6 +65,7 @@ protected:
      */
     void handleGetInfo();
     void handleUpdateInfo();
+    void handleSetSensorTime();
 
     /*
      * These are the methods that need to be provided by each, library specific implementation.

@@ -106,6 +106,9 @@ def main():
     update_info_parser = subparsers.add_parser('updateinfo', help='Update the configuration of the depth sensor')
     update_info_parser.add_argument('--name', required=True, help='The friendly name of the sensor to set.')
     update_info_parser.add_argument('--location', required=True, help='The location of the sensor to set.')
+    
+    # Create the parser for sensor time configuration
+    set_time_parser = subparsers.add_parser('settime', help='Set the time on the depth sensor with the current time on the operating system.')
 
     # Create the parser for the depth sensor configuration
     get_config_parser = subparsers.add_parser('config', help='Get or update the configuration of the depth sensor')
@@ -131,9 +134,10 @@ def main():
         args.secret = ""
 
     # Create the token and the signature since it will be required for all operations
-    token_timestamp_str = str(int(time.time()))
+    #  time.time() returns in UTC, but when I set the time I use local time.
     secret_key = args.secret
     token_data = secrets.token_hex(32)
+    token_timestamp_str = str(int(time.time()))
     signature, token = mszutl.create_hmac_signature(secret_key, token_data, token_timestamp_str)
 
     # Prepare the headers, used for every request.
@@ -145,7 +149,7 @@ def main():
     mszutl.logIfTurnedOn("**** Authentication Details ****")
     mszutl.logIfTurnedOn("Signature: {}".format(signature))
     mszutl.logIfTurnedOn("Token: {}".format(token))
-    mszutl.logIfTurnedOn("Timestamp:".format(token_timestamp_str))
+    mszutl.logIfTurnedOn("Timestamp: {}".format(token_timestamp_str))
     mszutl.logIfTurnedOn("********************************")
     mszutl.logIfTurnedOn("")
 
@@ -161,6 +165,15 @@ def main():
         if not result:
             print("Failed to update the depth sensor metadata.")
             sys.exit(1)
+    elif operation == 'settime':
+        result, updatedTime = mszutl.set_time_on_sensor(args.ip, headers)
+        if not result:
+            print("Failed to set the time on the depth sensor.")
+            sys.exit(1)
+        elif os.environ.get('LOGGING') == 'ON':
+            updatedTimeParsed = datetime.datetime.fromtimestamp(float(updatedTime))
+            updatedTimeFormatted = updatedTimeParsed.strftime("%Y-%m-%d %H:%M:%S")
+            print("Updated time on the sensor is: {}".format(updatedTimeFormatted))
     elif operation == 'config':
         result = get_depth_sensor_config(args.ip, headers)
         if not result:
@@ -179,7 +192,7 @@ def main():
             sys.exit(1)
         elif os.environ.get('LOGGING') == 'ON':
             for m in measurements.measurements:
-                measureTime = datetime.datetime.fromtimestamp(m.measureTime)
+                measureTime = datetime.datetime.fromtimestamp(m.measureTime).astimezone(tz=None)
                 measureTimeFormatted = measureTime.strftime("%Y-%m-%d %H:%M:%S")
                 print("-- Measurement: time = {}, centimeters = {}, retrieved before = {}".format(measureTimeFormatted, m.centimeters, m.retrievedBefore))
     elif operation == 'purge':

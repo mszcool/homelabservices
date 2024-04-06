@@ -22,6 +22,7 @@ void MszAssetApiBase::begin(MszSecretHandler *secretHandler)
     // Configure the endpoints that all assets should have.
     this->registerGetEndpoint(MszAssetApiBase::API_ENDPOINT_INFO, std::bind(&MszAssetApiBase::handleGetInfo, this));
     this->registerPutEndpoint(MszAssetApiBase::API_ENDPOINT_UPDATEINFO, std::bind(&MszAssetApiBase::handleUpdateInfo, this));
+    this->registerPutEndpoint(MszAssetApiBase::API_ENDPOINT_SETTIME, std::bind(&MszAssetApiBase::handleSetSensorTime, this));
 
     // Then allow derived classes doing their configuration
     this->beginCfg();
@@ -212,6 +213,86 @@ void MszAssetApiBase::handleUpdateInfo()
         return response;
     });
     Serial.println("Asset API - handleUpdateInfo - exit");
+}
+
+void MszAssetApiBase::handleSetSensorTime()
+{
+    Serial.println("Asset API - handleSetSensorTime - enter");
+    performAuthorizedAction([this]() -> CoreHandlerResponse {
+
+        Serial.println("Asset API - handleSetSensorTime - validating prameters...");
+        bool invalidParams = false;
+        String paramHourString = this->getQueryStringParam(MszAssetApiBase::PARAM_HOUR);
+        String paramMinuteString = this->getQueryStringParam(MszAssetApiBase::PARAM_MINUTE);
+        String paramSecondString = this->getQueryStringParam(MszAssetApiBase::PARAM_SECOND);
+        String paramDayString = this->getQueryStringParam(MszAssetApiBase::PARAM_DAY);
+        String paramMonthString = this->getQueryStringParam(MszAssetApiBase::PARAM_MONTH);
+        String paramYearString = this->getQueryStringParam(MszAssetApiBase::PARAM_YEAR);
+
+        // Check if any parameters are missing.
+        if ( (paramHourString == nullptr) || (paramMinuteString == nullptr) || (paramSecondString == nullptr) || (paramDayString == nullptr) || (paramMonthString == nullptr) || (paramYearString == nullptr) || 
+             (paramHourString == "") || (paramMinuteString == "") || (paramSecondString == "") || (paramDayString == "") || (paramMonthString == "") || (paramYearString == "") )
+        {
+            Serial.println("Asset API - handleSetSensorTime - missing parameters - exit");
+            invalidParams = true;
+        }
+
+        // Now convert all parameters into integers.
+        int hour, min, sec, day, month, year;
+        std::istringstream intStreamConverter(paramHourString.c_str());
+        intStreamConverter >> std::noskipws >> hour;
+        invalidParams = invalidParams || intStreamConverter.fail();
+        intStreamConverter.clear();
+        intStreamConverter.str(paramMinuteString.c_str());
+        intStreamConverter >> std::noskipws >> min;
+        invalidParams = invalidParams || intStreamConverter.fail();
+        intStreamConverter.clear();
+        intStreamConverter.str(paramSecondString.c_str());
+        intStreamConverter >> std::noskipws >> sec;
+        invalidParams = invalidParams || intStreamConverter.fail();
+        intStreamConverter.clear();
+        intStreamConverter.str(paramDayString.c_str());
+        intStreamConverter >> std::noskipws >> day;
+        invalidParams = invalidParams || intStreamConverter.fail();
+        intStreamConverter.clear();
+        intStreamConverter.str(paramMonthString.c_str());
+        intStreamConverter >> std::noskipws >> month;
+        invalidParams = invalidParams || intStreamConverter.fail();
+        intStreamConverter.clear();
+        intStreamConverter.str(paramYearString.c_str());
+        intStreamConverter >> std::noskipws >> year;
+        invalidParams = invalidParams || intStreamConverter.fail();
+
+        // If any of the conversion steps failed above, return a bad request response.
+        if(invalidParams)
+        {
+            Serial.println("Asset API - handleSetSensorTime - invalid metadata parameters - exit");
+
+            CoreHandlerResponse response;
+            response.statusCode = HTTP_BAD_REQUEST_CODE;
+            response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+            response.returnContent = this->getErrorJsonDocument(HTTP_BAD_REQUEST_CODE, "BadRequest", "You provided invalid parameters for the Switch Information!");
+            
+            Serial.println("Asset API - handleSetSensorTime - exit");
+            return response;
+        }
+
+        // Validation succeeded, now let's set the time.
+        Serial.println("Asset API - handleSetSensorTime - setting time...");
+        setTime(hour, min, sec, day, month, year);
+
+        // Now get the time in ticks and return that value to the client for confirmation.
+        time_t currentTime = now();
+
+        // Provide responses back to the client.
+        Serial.println("Asset API - handleSetSensorTime - returning response...");
+        CoreHandlerResponse response;
+        response.statusCode = HTTP_OK_CODE;
+        response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+        response.returnContent = String(currentTime);
+        return response;
+    });
+    Serial.println("Asset API - handleSetSensorTime - exit");
 }
 
 bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)

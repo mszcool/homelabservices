@@ -4,8 +4,7 @@ import hmac
 import hashlib
 import binascii
 import requests
-import argparse
-import secrets
+import datetime
 from urllib.parse import urlunparse, urlencode, quote
 
 #
@@ -102,3 +101,30 @@ def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
         return True
     else:
         return False
+    
+#
+# Set the time on the sensor.
+#
+def set_time_on_sensor(switch_ip, headers):
+    logIfTurnedOn("[Set Time] Setting time on the sensor...")
+    datetime_now = datetime.datetime.now(datetime.timezone.utc)
+    response = call_endpoint(
+        switch_ip,
+        headers,
+        'settime',
+        'hour={}&minute={}&second={}&day={}&month={}&year={}'.format(
+            datetime_now.hour,
+            datetime_now.minute,
+            datetime_now.second,
+            datetime_now.day,
+            datetime_now.month,
+            datetime_now.year
+        ),
+        verb='PUT')
+    logIfTurnedOn("[Set Time] Response status code: {}".format(response.status_code))
+    logIfTurnedOn("[Set Time] Response body:")
+    print(response.text)
+    if response.status_code == 200:
+        return True, response.text
+    else:
+        return False, None
