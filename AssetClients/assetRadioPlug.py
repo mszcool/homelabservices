@@ -1,4 +1,7 @@
+import os
+import sys
 import time
+import datetime
 import argparse
 import secrets
 from urllib.parse import urlunparse, urlencode, quote
@@ -144,6 +147,9 @@ def main():
     parser_updateinfo.add_argument('--name', required=True)
     parser_updateinfo.add_argument('--location', required=True)
 
+    # Create the parser for sensor time configuration
+    set_time_parser = subparsers.add_parser('settime', help='Set the time on the depth sensor with the current time on the operating system.')
+
     # Create the parser for the "registerswitch" command
     parser_registerswitch = subparsers.add_parser('registerswitch')
     parser_registerswitch.add_argument('--name', required=True)
@@ -196,32 +202,41 @@ def main():
         result, status, sensor_name, sensor_location = mszutl.get_metadata_from_switch(args.ip, headers)
         if not result:
             mszutl.logIfTurnedOn("Failed to get metadata. Exiting...")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'updateinfo':
         result = mszutl.update_metadata_of_switch(args.ip, headers, args.name, args.location)
         if not result:
             mszutl.logIfTurnedOn("Failed to update metadata. Exiting...")
-            SystemExit(1)
+            sys.exit(1)
+    elif operation == 'settime':
+        result, updatedTime = mszutl.set_time_on_sensor(args.ip, headers)
+        if not result:
+            print("Failed to set the time on the depth sensor.")
+            sys.exit(1)
+        elif os.environ.get('LOGGING') == 'ON':
+            updatedTimeParsed = datetime.datetime.fromtimestamp(float(updatedTime))
+            updatedTimeFormatted = updatedTimeParsed.strftime("%Y-%m-%d %H:%M:%S")
+            print("Updated time on the sensor is: {}".format(updatedTimeFormatted))
     elif operation == 'registerswitch':
         result = update_switch_data(args.ip, headers, args.name, args.oncommand, args.offcommand, args.istristate, args.protocol, args.pulselength, args.repeattransmit)
         if not result:
             mszutl.logIfTurnedOn("Failed to register switch. Exiting...")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'switch':
         result = turn_switch_on_or_off(args.ip, headers, args.name, args.status == 'on')
         if not result:
             mszutl.logIfTurnedOn("Failed to turn switch on/off. Exiting...")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'applyconfig':
         result = apply_configuration(args.ip, headers, args.file)
         if not result:
             mszutl.logIfTurnedOn("Failed to apply configuration. Exiting...")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'turnbyconfig':
         result = turn_switches_on_or_off_by_config(args.ip, headers, args.file, args.status == 'on')
         if not result:
             mszutl.logIfTurnedOn("Failed to turn switches on/off. Exiting...")
-            SystemExit(1)
+            sys.exit(1)
     elif operation == 'help' or operation == None:
         mszutl.logIfTurnedOn(f"Valid operations are: info, updateinfo, registerswitch, switch")
         mszutl.logIfTurnedOn(f"info --secret <secretKey> --ip <switchip>: Get the metadata from the switch.")
