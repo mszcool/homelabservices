@@ -118,7 +118,6 @@ def apply_configuration(sensor_ip, headers, file):
 #
     
 def main():
-    print("Asset Depth Sensor Management Utility")
     # Create the top-level parser
     parser = argparse.ArgumentParser(description='Manage the depth sensor')
     parser.add_argument('--secret', required=False, help='The secret key used for the authentication')
