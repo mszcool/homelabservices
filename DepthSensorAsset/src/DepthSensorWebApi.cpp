@@ -200,7 +200,7 @@ void MszDepthSensorApi::handleGetDepthSensorMeasurements()
             JsonObject measurement = measurementsArray.add<JsonObject>();
             measurement["measureTime"] = state.measurements[i].measurementTime;
             measurement["centimeters"] = state.measurements[i].measurementInCm;
-            measurement["retrievedBefore"] = !state.measurements[i].hasBeenRetrieved;
+            measurement["retrievedBefore"] = state.measurements[i].hasBeenRetrieved;
             this->depthSensorRepository->setMeasurementRetrieved(i);
         }
         serializeJsonPretty(responseDoc, response.returnContent);
