@@ -59,13 +59,17 @@ def get_depth_sensor_measurements(sensor_ip, headers):
 
     mszutl.logIfTurnedOn("[Depth Measurements] Response status code: {}".format(response.status_code))
     mszutl.logIfTurnedOn("[Depth Measurements] Response body:")
-    print(response.text)
 
     # Parse the response
     if response.status_code == 200:
         measurements = dentities.DepthSensorMeasurementCollection.from_json(response.text)
+        for m in measurements.measurements:
+            # Rewrite the measureTime which is in ticks to formatted date using YYYY-mm-dd HH:MM:SS
+            m.measureTime = datetime.datetime.fromtimestamp(m.measureTime).strftime("%Y-%m-%d %H:%M:%S")
+        print (measurements.to_json())
         return True, measurements
     else:
+        print(response.text)
         return False, None
     
 #
@@ -224,9 +228,7 @@ def main():
             sys.exit(1)
         elif os.environ.get('LOGGING') == 'ON':
             for m in measurements.measurements:
-                measureTime = datetime.datetime.fromtimestamp(m.measureTime).astimezone(tz=None)
-                measureTimeFormatted = measureTime.strftime("%Y-%m-%d %H:%M:%S")
-                print("-- Measurement: time = {}, centimeters = {}, retrieved before = {}".format(measureTimeFormatted, m.centimeters, m.retrievedBefore))
+                print("-- Measurement: time = {}, centimeters = {}, retrieved before = {}".format(m.measureTime, m.centimeters, m.retrievedBefore))
     elif operation == 'purge':
         result = purge_depth_sensor_measurements(args.ip, headers)
         if not result:
