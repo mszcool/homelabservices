@@ -45,6 +45,7 @@ AssetMetadataParams AssetBaseRepository::loadMetadata()
 
     Serial.println("AssetBaseRepository::loadMetadata - sensorName = " + String(metadata.sensorName));
     Serial.println("AssetBaseRepository::loadMetadata - sensorLocation = " + String(metadata.sensorLocation));
+    Serial.println("AssetBaseRepository::loadMetadata - sensorMqttServer = " + String(metadata.sensorMqttServer));
     Serial.println("AssetBaseRepository::loadMetadata - exit");
     return metadata;
 }

@@ -304,6 +304,9 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
 
     String sensorName = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_NAME);
     String sensorLocation = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_LOCATION);
+    String sensorMqttServer = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_SERVER);
+    String sensorMqttUsername = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_USERNAME);
+    String sensorMqttPassword = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_PASSWORD);
 
     if (sensorName == nullptr || sensorName == "" || sensorLocation == nullptr || sensorLocation == "")
     {
@@ -311,11 +314,25 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
         return false;
     }
 
+    if (sensorMqttServer != nullptr && sensorMqttServer != "")
+    {
+        if (sensorMqttUsername == nullptr || sensorMqttUsername == "" || sensorMqttPassword == nullptr || sensorMqttPassword == "")
+        {
+            Serial.println("Asset API - getMetadataParams - invalid MQTT parameters - exit");
+            return false;
+        }
+
+        sensorMqttServer.toCharArray(metadataParams.sensorMqttServer, sizeof(metadataParams.sensorMqttServer));
+        sensorMqttUsername.toCharArray(metadataParams.sensorMqttUsername, sizeof(metadataParams.sensorMqttUsername));
+        sensorMqttPassword.toCharArray(metadataParams.sensorMqttPassword, sizeof(metadataParams.sensorMqttPassword));
+    }
+
     sensorName.toCharArray(metadataParams.sensorName, sizeof(metadataParams.sensorName));
     sensorLocation.toCharArray(metadataParams.sensorLocation, sizeof(metadataParams.sensorLocation));
 
     Serial.println("Asset API - getMetadataParams - sensorName = " + String(metadataParams.sensorName));
     Serial.println("Asset API - getMetadataParams - sensorLocation = " + String(metadataParams.sensorLocation));
+    Serial.println("Asset API - getMetadataParams - sensorMqttServer = " + String(metadataParams.sensorMqttServer));
     Serial.println("Asset API - getMetadataParams - exit");
     return true;
 }

@@ -2,9 +2,9 @@
 #define MSZ_SWITCHSERVER_H
 
 #include <Arduino.h>
-#include <RCSwitch.h>
 #include <AssetApiBase.h>
 #include <SecretHandler.h>
+#include "SwitchLogic.h"
 #include "SwitchData.h"
 #include "SwitchRepository.h"
 
@@ -17,10 +17,13 @@ class MszSwitchWebApi
 public:
   MszSwitchWebApi();
   MszSwitchWebApi(short secretId, int serverPort);
+  
+  void configure(MszSwitchLogic *switchLogicInstance);
 
   static constexpr const char *API_ENDPOINT_ON = "/switchon";
   static constexpr const char *API_ENDPOINT_OFF = "/switchoff";
   static constexpr const char *API_ENDPOINT_UPDATESWITCHDATA = "/updateswitchdata";
+  static constexpr const char *API_ENDPOINT_UPDATESWITCHRECEIVE = "/updateswitchreceive";
 
   static constexpr const char *API_PARAM_SWITCHID = "switchid";
   static constexpr const char *API_PARAM_SWITCHNAME = "switchname";
@@ -35,6 +38,10 @@ public:
   static constexpr const char *PARAM_PULSELENGTH = "pulselength";
   static constexpr const char *PARAM_REPEATTRANSMIT = "repeattransmit";
 
+  static constexpr const char *PARAM_RECEIVE_VALUE = "recval";
+  static constexpr const char *PARAM_RECEIVE_PROTOCOL = "recprot";
+  static constexpr const char *PARAM_RECEIVE_COMMAND = "reccmd";
+
   static const int HTTP_AUTH_SECRET_ID = 0;
   static const int TOKEN_EXPIRATION_SECONDS = 60;
 
@@ -46,7 +53,7 @@ public:
 
 
 protected:
-  RCSwitch switchSender;
+  MszSwitchLogic *switchLogic;
 
   /*
    * The configuration method is overridden by the specific API servers such as this SwitchServer
@@ -60,9 +67,11 @@ protected:
   void handleSwitchOn();
   void handleSwitchOff();
   void handleUpdateSwitchData();
+  void handleUpdateSwitchReceive();
 
 private:
   bool getSwitchDataParams(SwitchDataParams &switchParams);
+  bool getSwitchReceiveParams(SwitchReceiveParams &receiveParams);
   CoreHandlerResponse handleSwitchOnOffCore(bool switchItOn);
 };
 

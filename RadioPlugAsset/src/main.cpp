@@ -24,6 +24,9 @@ const char *PREFERENCES_NAMESPACE = "msz-radioswsrv";
 WiFiManager wifiManager;
 Preferences preferences;
 
+MszSecretHandler *secretHandler;
+MszSwitchLogic *switchLogic;
+
 #if defined(ESP32)
 MszSwitchApiEsp32 switchServer(MszSwitchWebApi::HTTP_AUTH_SECRET_ID, 80);
 #elif defined(ESP8266)
@@ -40,7 +43,8 @@ void setup()
   preferences.begin(PREFERENCES_NAMESPACE, false);
 
   // Creating a secrets handler
-  MszSecretHandler *secretHandler = new MszSecretHandler();
+  secretHandler = new MszSecretHandler();
+  switchLogic = new MszSwitchLogic();
 
   // Next, start the WifiManager
   setupWifi(WIFI_HOST_NAME,
@@ -55,6 +59,9 @@ void setup()
             &wifiManager,
             &WiFi);
 
+  // Now configure the switch logic in the API server before we begin.
+  switchServer.configure(switchLogic);
+
   // After WiFi was set-up, we can configure the web server.
   switchServer.begin(secretHandler);
 }
@@ -63,4 +70,7 @@ void loop()
 {
   // put your main code here, to run repeatedly:
   switchServer.loop();
+
+  // handle RC receive commands
+  switchLogic->handleSwitchReceiveData();
 }

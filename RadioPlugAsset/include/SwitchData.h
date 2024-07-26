@@ -5,6 +5,7 @@
 
 #define MAX_SWITCH_NAME_LENGTH 64
 #define MAX_SWITCH_COMMAND_LENGTH 64
+#define MAX_SWITCH_MQTT_TOPIC_LENGTH 128
 
 /// @brief Defines the parameters for the Switch
 /// @details Defines a unique ID for the switch such that the config can be updated, a name, and the command.
@@ -19,6 +20,14 @@ struct SwitchDataParams
   char switchOffCommand[MAX_SWITCH_COMMAND_LENGTH+1];
   int pulseLength;
   int repeatTransmit;
+};
+
+struct SwitchReceiveParams
+{
+  unsigned int switchProtocol;
+  unsigned long switchReceiveDecimalValue;
+  char switchTopic[MAX_SWITCH_MQTT_TOPIC_LENGTH+1];
+  char switchCommand[MAX_SWITCH_COMMAND_LENGTH+1];
 };
 
 #endif // SWITCHDATA_H

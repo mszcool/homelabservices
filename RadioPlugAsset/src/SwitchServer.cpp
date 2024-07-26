@@ -6,7 +6,7 @@
 #include "SecretHandler.h"
 
 /*
- * The base class constructors are doing all the initialization, already.
+ * The base class constructors and public initialization methods are doing all the initialization, already.
  */
 MszSwitchWebApi::MszSwitchWebApi() : MszAssetApiBase()
 {
@@ -14,6 +14,11 @@ MszSwitchWebApi::MszSwitchWebApi() : MszAssetApiBase()
 
 MszSwitchWebApi::MszSwitchWebApi(short secretId, int serverPort) : MszAssetApiBase(secretId, serverPort)
 {
+}
+
+void MszSwitchWebApi::configure(MszSwitchLogic *switchLogicInstance)
+{
+  this->switchLogic = switchLogicInstance;
 }
 
 /*
@@ -27,15 +32,16 @@ void MszSwitchWebApi::beginCfg()
   Serial.println("MszSwitchWebApi::beginCfg() - Configuring Switch API secret handler");
   this->registerPutEndpoint(API_ENDPOINT_ON, std::bind(&MszSwitchWebApi::handleSwitchOn, this));
   this->registerPutEndpoint(API_ENDPOINT_OFF, std::bind(&MszSwitchWebApi::handleSwitchOff, this));
+  this->registerPutEndpoint(API_ENDPOINT_UPDATESWITCHRECEIVE, std::bind(&MszSwitchWebApi::handleUpdateSwitchReceive, this));
   this->registerPutEndpoint(API_ENDPOINT_UPDATESWITCHDATA, std::bind(&MszSwitchWebApi::handleUpdateSwitchData, this));
   Serial.println("MszSwitchWebApi::beginCfg() - Switch API endpoints configured!");
 
-  Serial.println("MszSwitchWebApi::beginCfg() - Configuring RCSwitch...");
-  switchSender.enableTransmit(RCSWITCH_DATA_PORT);
-  switchSender.setPulseLength(RCSWITCH_DATA_PULSE_LENGTH);
-  switchSender.setProtocol(RCSWITCH_DATA_PROTOCOL);
-  switchSender.setRepeatTransmit(RCSWITCH_REPEAT_TRANSMIT);
-  Serial.println("MszSwitchWebApi::beginCfg() - RCSwitch configured!");
+  // If the switch logic is not present, throw an exception
+  if (this->switchLogic == nullptr)
+  {
+    Serial.println("MszSwitchWebApi::beginCfg() - Switch logic not configured!");
+    throw std::runtime_error("Switch logic not configured!");
+  }
 
   Serial.println("MszSwitchWebApi::beginCfg() - exit");
 }
@@ -59,7 +65,8 @@ void MszSwitchWebApi::handleSwitchOff()
 void MszSwitchWebApi::handleUpdateSwitchData()
 {
   Serial.println("MszSwitchWebApi::handleUpdateSwitchData - enter");
-  performAuthorizedAction([&]() {
+  performAuthorizedAction([&]()
+                          {
     // First, get the switch parameters from the request.
     SwitchDataParams switchData;
     if (!(this->getSwitchDataParams(switchData)))
@@ -91,9 +98,50 @@ void MszSwitchWebApi::handleUpdateSwitchData()
     respDoc["switchStatus"] = (succeeded ? "SWITCH_UPDATED" : "SWITCH_UPDATE_FAILED");
     serializeJsonPretty(respDoc, response.returnContent);
     
-    return response;
-  });
+    return response; });
   Serial.println("MszSwitchWebApi::handleUpdateSwitchData - exit");
+}
+
+void MszSwitchWebApi::handleUpdateSwitchReceive()
+{
+  Serial.println("MszSwitchWebApi::handleUpdateSwitchReceive - enter");
+  performAuthorizedAction([&]()
+                          {
+    // First, get the switch parameters from the request.
+    SwitchReceiveParams receiveParams;
+    if (!(this->getSwitchReceiveParams(receiveParams)))
+    {
+      Serial.println("MszSwitchWebApi::handleUpdateSwitchReceiveCore - switch receive data invalid");
+
+      CoreHandlerResponse response;
+      response.statusCode = HTTP_BAD_REQUEST_CODE;
+      response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+      response.returnContent = this->getErrorJsonDocument(
+                                      HTTP_BAD_REQUEST_CODE,
+                                      "Invalid Switch Receive Data!",
+                                      "You did not provide valid switch receive data for updating the switch!");
+
+      Serial.println("MszSwitchWebApi::handleUpdateSwitchReceiveCore - exit");
+      return response;
+    }
+    
+    // If all parameters are validated, execute the core logic.
+    MszSwitchRepository switchRepository;
+    std::unordered_map<int, SwitchReceiveParams> receiveData = switchRepository.loadSwitchReceiveData();
+    receiveData[receiveParams.switchReceiveDecimalValue] = receiveParams;
+    bool succeeded = switchRepository.saveSwitchReceiveData(receiveData);
+
+    CoreHandlerResponse response;
+    response.statusCode = (succeeded ? HTTP_OK_CODE : HTTP_INTERNAL_SERVER_ERROR_CODE);
+    response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
+
+    JsonDocument respDoc;
+    respDoc["switchReceiveValue"] = receiveParams.switchReceiveDecimalValue;
+    respDoc["switchStatus"] = (succeeded ? "SWITCH_RECEIVE_UPDATED" : "SWITCH_RECEIVE_UPDATE_FAILED");
+    serializeJsonPretty(respDoc, response.returnContent);
+    
+    return response; });
+  Serial.println("MszSwitchWebApi::handleUpdateSwitchReceive - exit");
 }
 
 /*
@@ -131,7 +179,7 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
     return false;
   }
 
-  // We need to test, if the pulseLength and the 
+  // We need to test, if the pulseLength and the
 
   // Move the items into the structure
   paramSwitchName.toCharArray(switchParams.switchName, MAX_SWITCH_NAME_LENGTH + 1);
@@ -179,6 +227,44 @@ bool MszSwitchWebApi::getSwitchDataParams(SwitchDataParams &switchParams)
   return true;
 }
 
+bool MszSwitchWebApi::getSwitchReceiveParams(SwitchReceiveParams &receiveParams)
+{
+  Serial.println("Getting switch receive parameters - enter.");
+
+  // Read the string data from parameters.
+  String paramReceiveValue = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_VALUE);
+  String paramReceiveProtocol = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_PROTOCOL);
+  String paramReceiveCommand = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_COMMAND);
+
+  if (paramReceiveValue == nullptr || paramReceiveProtocol == nullptr || paramReceiveCommand == nullptr)
+  {
+    Serial.println("Getting switch receive parameters - missing parameters - exit.");
+    return false;
+  }
+
+  if (paramReceiveValue == "" || paramReceiveProtocol == "" || paramReceiveCommand == "")
+  {
+    Serial.println("Getting switch receive parameters - missing parameters - exit.");
+    return false;
+  }
+
+  // Move the items into the structure
+  receiveParams.switchReceiveDecimalValue = paramReceiveValue.toInt();
+  paramReceiveCommand.toCharArray(receiveParams.switchCommand, MAX_SWITCH_MQTT_TOPIC_LENGTH + 1);
+
+  // Read types that require conversion from parameters - protocol.
+  std::istringstream convProto(paramReceiveProtocol.c_str());
+  convProto >> std::noskipws >> receiveParams.switchProtocol;
+  if (convProto.fail())
+  {
+    Serial.println("Getting switch receive parameters - convert protocol failed - exit.");
+    return false;
+  }
+
+  Serial.println("Getting switch receive parameters - exit.");
+  return true;
+}
+
 CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
 {
   Serial.println("Switch API handleSwitchOnOffCore - enter");
@@ -193,9 +279,9 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
     response.statusCode = HTTP_BAD_REQUEST_CODE;
     response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
     response.returnContent = this->getErrorJsonDocument(
-                                    HTTP_BAD_REQUEST_CODE,
-                                    "Invalid Switch!",
-                                    "You did not provide a switch name for turning on or off!");
+        HTTP_BAD_REQUEST_CODE,
+        "Invalid Switch!",
+        "You did not provide a switch name for turning on or off!");
 
     Serial.println("Switch API handleSwitchOnOffCore - exit");
     return response;
@@ -204,32 +290,21 @@ CoreHandlerResponse MszSwitchWebApi::handleSwitchOnOffCore(bool switchItOn)
   // If validation succeeded, let's executed the business logic.
   MszSwitchRepository switchRepository;
   CoreHandlerResponse response;
-  SwitchDataParams switchData = switchRepository.loadSwitchData(switchName);
-  if (strnlen(switchData.switchName, MAX_SWITCH_NAME_LENGTH) == 0)
+
+  int switchSucceeded = this->switchLogic->toggleSwitch(switchName, switchItOn);
+  if (switchSucceeded)
   {
     Serial.println("Switch API handleSwitchOnOffCore - switch not found");
 
     response.statusCode = HTTP_NOT_FOUND_CODE;
     response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;
     response.returnContent = this->getErrorJsonDocument(
-                                    HTTP_NOT_FOUND_CODE,
-                                    "Switch not found!",
-                                    "Switch " + switchName + " cannot be found!");
+        HTTP_NOT_FOUND_CODE,
+        "Switch not found!",
+        "Switch " + switchName + " cannot be found!");
   }
   else
   {
-    switchSender.setProtocol(switchData.switchProtocol);
-    switchSender.setPulseLength(switchData.pulseLength > 0 ? switchData.pulseLength : RCSWITCH_DATA_PULSE_LENGTH);
-    switchSender.setRepeatTransmit(switchData.repeatTransmit > 0 ? switchData.repeatTransmit : RCSWITCH_REPEAT_TRANSMIT);
-    if (switchData.isTriState)
-    {
-      switchSender.sendTriState((switchItOn ? switchData.switchOnCommand : switchData.switchOffCommand));
-    }
-    else
-    {
-      switchSender.send((switchItOn ? switchData.switchOnCommand : switchData.switchOffCommand));
-    }
-
     Serial.println("Preparing response data...");
     response.statusCode = HTTP_OK_CODE;
     response.contentType = HTTP_RESPONSE_CONTENT_TYPE_APPLICATION_JSON;

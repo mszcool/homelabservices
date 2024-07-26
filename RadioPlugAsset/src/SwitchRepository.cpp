@@ -76,4 +76,77 @@ bool MszSwitchRepository::saveSwitchData(String switchName, SwitchDataParams swi
     return succeeded;
 }
 
+std::unordered_map<int, SwitchReceiveParams> MszSwitchRepository::loadSwitchReceiveData()
+{
+    Serial.println("SwitchRepository::loadSwitchReceiveData - enter");
+
+    // We return a hashmap, the key of the items is the decimal from the 
+    // radio switch. The value contains the MQTT topic data in the SwitchReceiveParams struct.
+    std::unordered_map<int, SwitchReceiveParams> receiveParams;
+    
+    // Load the whole file with a maximum of SWITCH_MAX_RECEIVE_ENTRIES entries.
+    File file = SPIFFS.open(SWITCH_FILENAME_RECEIVE_FILENAME, "r");
+    if (file)
+    {
+        while (file.available())
+        {
+            SwitchReceiveParams receiveParam;
+            file.readBytes((char *)&receiveParam, sizeof(receiveParam));
+            if ((receiveParam.switchReceiveDecimalValue >= 0) && (receiveParam.switchReceiveDecimalValue < SWITCH_MAX_RECEIVE_ENTRIES))
+            {
+                receiveParams[receiveParam.switchReceiveDecimalValue] = receiveParam;
+            }
+            else
+            {
+                Serial.println("SwitchRepository::loadSwitchReceiveData - invalid switchReceiveDecimalValue");
+            }
+        }
+        file.close();
+    }
+    else
+    {
+        Serial.println("SwitchRepository::loadSwitchReceiveData - failed to open file");
+    }
+
+    Serial.println("SwitchRepository::loadSwitchReceiveData - exit");
+    return receiveParams;
+}
+
+bool MszSwitchRepository::saveSwitchReceiveData (std::unordered_map<int, SwitchReceiveParams> receiveParams)
+{
+    Serial.println("SwitchRepository::saveSwitchReceiveData - enter");
+
+    // Only write if there are not too many entries.
+    if (receiveParams.size() > SWITCH_MAX_RECEIVE_ENTRIES)
+    {
+        Serial.println("SwitchRepository::saveSwitchReceiveData - too many entries");
+        return false;
+    }
+
+    // Now write the contents to the file.
+    bool succeeded = false;
+    File file = SPIFFS.open(SWITCH_FILENAME_RECEIVE_FILENAME, "w");
+    if (file)
+    {
+        for (auto it = receiveParams.begin(); it != receiveParams.end(); ++it)
+        {
+            Serial.println("SwitchRepository::saveSwitchReceiveData - key = " + String(it->first) + " val = " + String(it->second.switchCommand));
+            if(file.write((const uint8_t *)&it->second, sizeof(it->second)) != sizeof(it->second))
+            {
+                Serial.println("SwitchRepository::saveSwitchReceiveData - failed to write data");
+                break;
+            }
+        }
+        file.close();
+        succeeded = true;
+    }
+    else
+    {
+        Serial.println("SwitchRepository::saveSwitchReceiveData - failed to open file for writing data");
+    }
+
+    Serial.println("SwitchRepository::saveSwitchReceiveData - exit");
+    return succeeded;
+}
+
 #endif
