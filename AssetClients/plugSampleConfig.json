@@ -30,13 +30,15 @@
             "receiveValue": 2345235,
             "receiveProtocol": 5,
             "receiveTopic": "this/is/the/topic1",
-            "receiveCommand": "cmd1"
+            "receiveCommand": "cmd1",
+            "receiveName": "buttonA"
         },
         {
             "receiveValue": 5634632,
             "receiveProtocol": 5,
             "receiveTopic": "this/is/the/topic2",
-            "receiveCommand": "cmd2"
+            "receiveCommand": "cmd2",
+            "receiveName": "buttonB"
         }
     ]
 }

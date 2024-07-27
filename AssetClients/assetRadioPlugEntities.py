@@ -11,11 +11,12 @@ class RadioPlug:
         self.repeatTransmit = repeatTransmit
 
 class RadioReceive:
-    def __init__(self, receiveValue, receiveProtocol, receiveTopic, receiveCommand):
+    def __init__(self, receiveValue, receiveProtocol, receiveTopic, receiveCommand, receiveName):
         self.receiveValue = receiveValue
         self.receiveProtocol = receiveProtocol
         self.receiveTopic = receiveTopic
         self.receiveCommand = receiveCommand
+        self.receiveName = receiveName
 
 class RadioPlugCollection:
     def __init__(self, name, location, mqttServer, mqttPort, mqttUser, mqttPassword, plugs, receivers):
