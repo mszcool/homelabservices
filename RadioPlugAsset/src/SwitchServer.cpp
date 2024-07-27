@@ -234,15 +234,16 @@ bool MszSwitchWebApi::getSwitchReceiveParams(SwitchReceiveParams &receiveParams)
   // Read the string data from parameters.
   String paramReceiveValue = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_VALUE);
   String paramReceiveProtocol = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_PROTOCOL);
+  String paramReceiveTopic = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_TOPIC);
   String paramReceiveCommand = this->getQueryStringParam(MszSwitchWebApi::PARAM_RECEIVE_COMMAND);
 
-  if (paramReceiveValue == nullptr || paramReceiveProtocol == nullptr || paramReceiveCommand == nullptr)
+  if (paramReceiveValue == nullptr || paramReceiveProtocol == nullptr || paramReceiveCommand == nullptr || paramReceiveTopic == nullptr)
   {
     Serial.println("Getting switch receive parameters - missing parameters - exit.");
     return false;
   }
 
-  if (paramReceiveValue == "" || paramReceiveProtocol == "" || paramReceiveCommand == "")
+  if (paramReceiveValue == "" || paramReceiveProtocol == "" || paramReceiveCommand == "" || paramReceiveTopic == "")
   {
     Serial.println("Getting switch receive parameters - missing parameters - exit.");
     return false;
@@ -250,7 +251,8 @@ bool MszSwitchWebApi::getSwitchReceiveParams(SwitchReceiveParams &receiveParams)
 
   // Move the items into the structure
   receiveParams.switchReceiveDecimalValue = paramReceiveValue.toInt();
-  paramReceiveCommand.toCharArray(receiveParams.switchCommand, MAX_SWITCH_MQTT_TOPIC_LENGTH + 1);
+  paramReceiveCommand.toCharArray(receiveParams.switchCommand, MAX_SWITCH_COMMAND_LENGTH + 1);
+  paramReceiveTopic.toCharArray(receiveParams.switchTopic, MAX_SWITCH_MQTT_TOPIC_LENGTH + 1);
 
   // Read types that require conversion from parameters - protocol.
   std::istringstream convProto(paramReceiveProtocol.c_str());

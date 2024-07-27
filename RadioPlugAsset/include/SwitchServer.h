@@ -17,7 +17,7 @@ class MszSwitchWebApi
 public:
   MszSwitchWebApi();
   MszSwitchWebApi(short secretId, int serverPort);
-  
+
   void configure(MszSwitchLogic *switchLogicInstance);
 
   static constexpr const char *API_ENDPOINT_ON = "/switchon";
@@ -40,6 +40,7 @@ public:
 
   static constexpr const char *PARAM_RECEIVE_VALUE = "recval";
   static constexpr const char *PARAM_RECEIVE_PROTOCOL = "recprot";
+  static constexpr const char *PARAM_RECEIVE_TOPIC = "rectopic";
   static constexpr const char *PARAM_RECEIVE_COMMAND = "reccmd";
 
   static const int HTTP_AUTH_SECRET_ID = 0;
