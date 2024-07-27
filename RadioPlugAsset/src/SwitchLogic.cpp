@@ -10,6 +10,9 @@
  */
 MszSwitchLogic::MszSwitchLogic()
 {
+    pinMode(RCSWITCH_RECEIVE_PORT, INPUT);
+    //rcHandler.enableReceive(digitalPinToInterrupt(RCSWITCH_RECEIVE_PORT));
+    rcHandler.enableReceive(RCSWITCH_RECEIVE_PORT);
     rcHandler.enableTransmit(RCSWITCH_SEND_PORT);
     rcHandler.setPulseLength(RCSWITCH_DATA_PULSE_LENGTH);
     rcHandler.setProtocol(RCSWITCH_DATA_PROTOCOL);
@@ -21,7 +24,7 @@ MszSwitchLogic::MszSwitchLogic()
  */
 void MszSwitchLogic::handleSwitchReceiveData()
 {
-    Serial.println("MszSwitchLogic::handleSwitchReceiveData - enter");
+    //Serial.println("MszSwitchLogic::handleSwitchReceiveData - enter");
 
     if (rcHandler.available())
     {
@@ -29,6 +32,8 @@ void MszSwitchLogic::handleSwitchReceiveData()
         unsigned int receivedProtocol = rcHandler.getReceivedProtocol();
         Serial.println("MszSwitchLogic::handleSwitchReceiveData - Received " + String(receivedValue) + " / " + String(rcHandler.getReceivedBitlength()) + "bit");
         
+        rcHandler.resetAvailable();
+
         std::unordered_map<int, SwitchReceiveParams> savedReceiveParams = this->switchRepository.loadSwitchReceiveData();
         if (savedReceiveParams.find(receivedValue) != savedReceiveParams.end())
         {
@@ -51,7 +56,7 @@ void MszSwitchLogic::handleSwitchReceiveData()
         }
     }
 
-    Serial.println("MszSwitchLogic::handleSwitchReceiveData - exit");
+    //Serial.println("MszSwitchLogic::handleSwitchReceiveData - exit");
 }
 
 int MszSwitchLogic::toggleSwitch(String switchName, bool switchOn)
