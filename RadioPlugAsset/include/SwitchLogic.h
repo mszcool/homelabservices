@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <RCSwitch.h>
 #include <SecretHandler.h>
+#include <PubSubClient.h>
+#include <WifiClient.h>
 #include "SwitchData.h"
 #include "AssetApiBaseData.h"
 #include "SwitchRepository.h"
@@ -16,6 +18,8 @@ public:
     void handleSwitchReceiveData();
     int toggleSwitch(String switchName, bool switchOn);
 
+    static const int SWITCH_MAX_MQTTCONNECT_ATTEMPTS = 5;
+    
     static const int RCSWITCH_RECEIVE_PORT = 19;
     static const int RCSWITCH_SEND_PORT = 23;
     static const int RCSWITCH_DATA_PULSE_LENGTH = 512;
@@ -29,6 +33,7 @@ public:
 
 protected:
     RCSwitch rcHandler;
+    WiFiClient wifiClient;
 };
 
 #endif // MSZ_SWITCHLOGIC_H
