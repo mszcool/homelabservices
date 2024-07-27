@@ -37,6 +37,32 @@ def update_switch_data(switch_ip, headers, switch_name, on_command, off_command,
         return True
     else:
         return False
+    
+#
+# Register a SwitchReceiveData with the switch-sensor.
+#
+def update_switch_receive_data(switch_ip, headers, receiveValue, receiveProtocol, receiveTriggerMqttTopic, receiveTriggerMqttCommand):
+    mszutl.logIfTurnedOn("[Save Switch Receive Data] Storing switch receive data...")
+    response = mszutl.call_endpoint(
+        switch_ip, 
+        headers, 
+        'updateswitchreceive', 
+        'recval={}&recprot={}&rectopic={}&reccommand={}'.format(
+            receiveValue, 
+            receiveProtocol, 
+            receiveTriggerMqttTopic, 
+            receiveTriggerMqttCommand
+        ),
+        verb='PUT'
+    )
+    mszutl.logIfTurnedOn("[Save Switch Receive Data] Response status code: {}".format(response.status_code))
+    mszutl.logIfTurnedOn("[Save Switch Receive Data] Response body:")
+    print(response.text)
+
+    if response.status_code == 200:
+        return True
+    else:
+        return False
 
 #
 # Turns the switch on or off.
@@ -83,6 +109,12 @@ def apply_configuration(switch_ip, headers, config_file_name):
                     result = update_switch_data(switch_ip, headers, sw.name, sw.onCommand, sw.offCommand, sw.isTriState, sw.protocol, sw.pulseLength, sw.repeatTransmit)
                     if not result:
                         mszutl.logIfTurnedOn("[Apply config] Failed updating switch {}, stopping.".format(sw.name))
+                        return False
+                # Now, register the receive values and mqtt topics
+                for rec in config.receivers:
+                    result = update_switch_receive_data(switch_ip, headers, rec.receiveValue, rec.receiveProtocol, rec.receiveTopic, rec.receiveCommand)
+                    if not result:
+                        mszutl.logIfTurnedOn("[Apply config] Failed updating receiver {}, stopping.".format(rec.receiveValue))
                         return False
                 mszutl.logIfTurnedOn("[Apply config] Done.")
                 return True
@@ -146,6 +178,10 @@ def main():
     parser_updateinfo = subparsers.add_parser('updateinfo')
     parser_updateinfo.add_argument('--name', required=True)
     parser_updateinfo.add_argument('--location', required=True)
+    parser_updateinfo.add_argument('--mqttserver', required=False)
+    parser_updateinfo.add_argument('--mqttport', required=False)
+    parser_updateinfo.add_argument('--mqttuser', required=False)
+    parser_updateinfo.add_argument('--mqttpassword', required=False)
 
     # Create the parser for sensor time configuration
     set_time_parser = subparsers.add_parser('settime', help='Set the time on the depth sensor with the current time on the operating system.')
@@ -159,6 +195,13 @@ def main():
     parser_registerswitch.add_argument('--istristate', required=True)
     parser_registerswitch.add_argument('--pulselength', required=True, type=int)
     parser_registerswitch.add_argument('--repeattransmit', required=True, type=int)
+
+    # Create the parser for the 'registerreceiver' command
+    parser_registerreceiver = subparsers.add_parser('registerreceiver')
+    parser_registerreceiver.add_argument('--recvalue', required=True)
+    parser_registerreceiver.add_argument('--recprot', required=True, choices=[1, 2, 3, 4, 5], type=int)
+    parser_registerreceiver.add_argument('--rectopic', required=True)
+    parser_registerreceiver.add_argument('--reccommand', required=True)
 
     # Create the parser for the "switch" command
     parser_switch = subparsers.add_parser('switch')
@@ -221,6 +264,11 @@ def main():
         result = update_switch_data(args.ip, headers, args.name, args.oncommand, args.offcommand, args.istristate, args.protocol, args.pulselength, args.repeattransmit)
         if not result:
             mszutl.logIfTurnedOn("Failed to register switch. Exiting...")
+            sys.exit(1)
+    elif operation == 'registerreceiver':
+        result = update_switch_receive_data(args.ip, headers, args.recvalue, args.recprot, args.rectopic, args.reccommand)
+        if not result:
+            mszutl.logIfTurnedOn("Failed to register receiver. Exiting...")
             sys.exit(1)
     elif operation == 'switch':
         result = turn_switch_on_or_off(args.ip, headers, args.name, args.status == 'on')

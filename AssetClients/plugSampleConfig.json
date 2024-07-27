@@ -1,6 +1,10 @@
 {
     "name": "testPlug",
     "location": "test location specification",
+    "mqttServer": "mqtt://localhost",
+    "mqttPort": 1883,
+    "mqttUser": "user",
+    "mqttPassword": "password",
     "plugs": [
         {
             "name": "testPlug",
@@ -15,6 +19,20 @@
             "offCommand": "DEF",
             "isTriState": "false",
             "protocol": 1
+        }
+    ],
+    "receivers": [
+        {
+            "receiveDecimal": 176382,
+            "receiveProtocol": 17,
+            "receiveTopic": "this/is/the/topic1",
+            "receiveCommand": "cmd1"
+        },
+        {
+            "receiveDecimal": 212443,
+            "receiveProtocol": 34,
+            "receiveTopic": "this/is/the/topic2",
+            "receiveCommand": "cmd2"
         }
     ]
 }
