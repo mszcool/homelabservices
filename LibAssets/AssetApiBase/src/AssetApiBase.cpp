@@ -355,6 +355,9 @@ String MszAssetApiBase::getMetadataJson(String status, AssetMetadataParams &para
     responseDoc["status"] = status;
     responseDoc["sensorName"] = params.sensorName;
     responseDoc["sensorLocation"] = params.sensorLocation;
+    responseDoc["sensorMqttServer"] = params.sensorMqttServer;
+    responseDoc["sensorMqttPort"] = params.sensorMqttPort;
+    responseDoc["sensorMqttUsername"] = params.sensorMqttUsername;
     serializeJsonPretty(responseDoc, jsonResp);
     return jsonResp;
 }
