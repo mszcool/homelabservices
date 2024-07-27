@@ -36,6 +36,7 @@ public:
     static constexpr const char *PARAM_SENSOR_NAME = "name";
     static constexpr const char *PARAM_SENSOR_LOCATION = "location";
     static constexpr const char *PARAM_SENSOR_MQTT_SERVER = "mqttserver";
+    static constexpr const char *PARAM_SENSOR_MQTT_PORT = "mqttport";
     static constexpr const char *PARAM_SENSOR_MQTT_USERNAME = "mqttusername";
     static constexpr const char *PARAM_SENSOR_MQTT_PASSWORD = "mqttpassword";
 

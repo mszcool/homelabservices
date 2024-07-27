@@ -305,6 +305,7 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
     String sensorName = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_NAME);
     String sensorLocation = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_LOCATION);
     String sensorMqttServer = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_SERVER);
+    String sensorMqttPort = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_PORT);
     String sensorMqttUsername = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_USERNAME);
     String sensorMqttPassword = this->getQueryStringParam(MszAssetApiBase::PARAM_SENSOR_MQTT_PASSWORD);
 
@@ -316,7 +317,7 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
 
     if (sensorMqttServer != nullptr && sensorMqttServer != "")
     {
-        if (sensorMqttUsername == nullptr || sensorMqttUsername == "" || sensorMqttPassword == nullptr || sensorMqttPassword == "")
+        if (sensorMqttUsername == nullptr || sensorMqttUsername == "" || sensorMqttPassword == nullptr || sensorMqttPassword == "" || sensorMqttPort == nullptr || sensorMqttPort == "")
         {
             Serial.println("Asset API - getMetadataParams - invalid MQTT parameters - exit");
             return false;
@@ -325,6 +326,16 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
         sensorMqttServer.toCharArray(metadataParams.sensorMqttServer, sizeof(metadataParams.sensorMqttServer));
         sensorMqttUsername.toCharArray(metadataParams.sensorMqttUsername, sizeof(metadataParams.sensorMqttUsername));
         sensorMqttPassword.toCharArray(metadataParams.sensorMqttPassword, sizeof(metadataParams.sensorMqttPassword));
+
+        int mqttPort = 0;
+        std::istringstream intStreamConverter(sensorMqttPort.c_str());
+        intStreamConverter >> std::noskipws >> mqttPort;
+        if (intStreamConverter.fail())
+        {
+            Serial.println("Asset API - getMetadataParams - invalid MQTT port - exit");
+            return false;
+        }
+        metadataParams.sensorMqttPort = mqttPort;
     }
 
     sensorName.toCharArray(metadataParams.sensorName, sizeof(metadataParams.sensorName));

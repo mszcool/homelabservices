@@ -25,6 +25,7 @@ struct AssetMetadataParams
   char sensorName[MAX_SENSOR_NAME_LENGTH+1];
   char sensorLocation[MAX_SENSOR_LOCATION_LENGTH+1];
   char sensorMqttServer[MAX_MQTT_SERVER_NAME+1];
+  int sensorMqttPort = 1883;
   char sensorMqttUsername[MAX_MQTT_USERNAME+1];
   char sensorMqttPassword[MAX_MQTT_PASSWORD+1];
 };
