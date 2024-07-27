@@ -337,6 +337,13 @@ bool MszAssetApiBase::getMetadataParams(AssetMetadataParams &metadataParams)
         }
         metadataParams.sensorMqttPort = mqttPort;
     }
+    else
+    {
+        metadataParams.sensorMqttServer[0] = '\0';
+        metadataParams.sensorMqttUsername[0] = '\0';
+        metadataParams.sensorMqttPassword[0] = '\0';
+        metadataParams.sensorMqttPort = 0;
+    }
 
     sensorName.toCharArray(metadataParams.sensorName, sizeof(metadataParams.sensorName));
     sensorLocation.toCharArray(metadataParams.sensorLocation, sizeof(metadataParams.sensorLocation));
