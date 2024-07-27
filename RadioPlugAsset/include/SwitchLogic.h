@@ -29,10 +29,6 @@ public:
 
 protected:
     RCSwitch rcHandler;
-
-private:
-    AssetBaseRepository assetRepository;
-    MszSwitchRepository switchRepository;
 };
 
 #endif // MSZ_SWITCHLOGIC_H

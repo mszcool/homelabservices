@@ -83,17 +83,23 @@ def get_metadata_from_switch(switch_ip, headers):
         status = info_dict['status'] if 'status' in info_dict else None
         sensor_name = info_dict['sensorName'] if 'sensorName' in info_dict else None
         sensor_location = info_dict['sensorLocation'] if 'sensorLocation' in info_dict else None
+        sensor_mqttserver = info_dict['sensorMqttServer'] if 'sensorMqttServer' in info_dict else None
+        sensor_mqttport = info_dict['sensorMqttPort'] if 'sensorMqttPort' in info_dict else None
+        sensor_mqttuser = info_dict['sensorMqttUser'] if 'sensorMqttUser' in info_dict else None
 
-        return True, status, sensor_name, sensor_location
+        return True, status, sensor_name, sensor_location, sensor_mqttserver, sensor_mqttport, sensor_mqttuser
     else:
-        return False, None, None, None
+        return False, None, None, None, None, None, None
     
 #
 # Registers a new switch.
 #
-def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location):
+def update_metadata_of_switch(switch_ip, headers, sensor_name, sensor_location, sensor_mqttserver = None, sensor_mqttport = None, sensor_mqttuser = None, sensor_mqttpassword = None):
     logIfTurnedOn("[Metadata Update] Setting sensor name and location...")
-    response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location), verb='PUT')
+    if sensor_mqttserver is not None and sensor_mqttport is not None and sensor_mqttuser is not None:
+        response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}&mqttserver={}&mqttport={}&mqttusername={}&mqttpassword={}'.format(sensor_name, sensor_location, sensor_mqttserver, sensor_mqttport, sensor_mqttuser, sensor_mqttpassword), verb='PUT')
+    else:
+        response = call_endpoint(switch_ip, headers, 'updateinfo', 'name={}&location={}'.format(sensor_name, sensor_location), verb='PUT')
     logIfTurnedOn("[Metadata Update] Response status code: {}".format(response.status_code))
     logIfTurnedOn("[Metadata Update] Response body:")
     print(response.text)

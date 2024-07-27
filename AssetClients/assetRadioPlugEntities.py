@@ -18,7 +18,7 @@ class RadioReceive:
         self.receiveCommand = receiveCommand
 
 class RadioPlugCollection:
-    def __init__(self, name, location, plugs, receivers, mqttServer = "", mqttPort = 1883, mqttUser = "", mqttPassword = ""):
+    def __init__(self, name, location, mqttServer, mqttPort, mqttUser, mqttPassword, plugs, receivers):
         self.name = name
         self.location = location
         self.plugs = plugs

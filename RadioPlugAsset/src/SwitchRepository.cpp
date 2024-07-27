@@ -92,7 +92,7 @@ std::unordered_map<int, SwitchReceiveParams> MszSwitchRepository::loadSwitchRece
         {
             SwitchReceiveParams receiveParam;
             file.readBytes((char *)&receiveParam, sizeof(receiveParam));
-            if ((receiveParam.switchReceiveDecimalValue >= 0) && (receiveParam.switchReceiveDecimalValue < SWITCH_MAX_RECEIVE_ENTRIES))
+            if ((receiveParam.switchReceiveDecimalValue >= 0))
             {
                 receiveParams[receiveParam.switchReceiveDecimalValue] = receiveParam;
             }

@@ -11,26 +11,30 @@
             "onCommand": "ABC",
             "offCommand": "DEF",
             "isTriState": "false",
-            "protocol": 1
+            "protocol": 1,
+            "pulseLength": 512,
+            "repeatTransmit": 10
         },
         {
             "name": "testPlug2",
             "onCommand": "ABC",
             "offCommand": "DEF",
             "isTriState": "false",
-            "protocol": 1
+            "protocol": 1,
+            "pulseLength": 512,
+            "repeatTransmit": 10
         }
     ],
     "receivers": [
         {
-            "receiveDecimal": 176382,
-            "receiveProtocol": 17,
+            "receiveValue": 2345235,
+            "receiveProtocol": 5,
             "receiveTopic": "this/is/the/topic1",
             "receiveCommand": "cmd1"
         },
         {
-            "receiveDecimal": 212443,
-            "receiveProtocol": 34,
+            "receiveValue": 5634632,
+            "receiveProtocol": 5,
             "receiveTopic": "this/is/the/topic2",
             "receiveCommand": "cmd2"
         }

@@ -47,7 +47,7 @@ def update_switch_receive_data(switch_ip, headers, receiveValue, receiveProtocol
         switch_ip, 
         headers, 
         'updateswitchreceive', 
-        'recval={}&recprot={}&rectopic={}&reccommand={}'.format(
+        'recval={}&recprot={}&rectopic={}&reccmd={}'.format(
             receiveValue, 
             receiveProtocol, 
             receiveTriggerMqttTopic, 
@@ -100,7 +100,10 @@ def apply_configuration(switch_ip, headers, config_file_name):
                 config = assetRadioPlugEntities.RadioPlugCollection.from_json(json_str)
                 mszutl.logIfTurnedOn("[Apply config] Data loaded, now applying to switch...")
                 # Start with updating the metadata / info
-                result = mszutl.update_metadata_of_switch(switch_ip, headers, config.name, config.location)
+                if config.mqttServer is not None and config.mqttPort is not None and config.mqttUser is not None and config.mqttPassword is not None:
+                    result = mszutl.update_metadata_of_switch(switch_ip, headers, config.name, config.location, config.mqttServer, config.mqttPort, config.mqttUser, config.mqttPassword)
+                else:
+                    result = mszutl.update_metadata_of_switch(switch_ip, headers, config.name, config.location)
                 if not result:
                     mszutl.logIfTurnedOn("[Apply config] Failed updating metadata, stopping.")
                     return False
@@ -242,12 +245,15 @@ def main():
     # Now, you can access the arguments like this:
     operation = args.operation
     if operation == 'info':
-        result, status, sensor_name, sensor_location = mszutl.get_metadata_from_switch(args.ip, headers)
+        result, status, sensor_name, sensor_location, mqttserver, mqttport, mqttuser = mszutl.get_metadata_from_switch(args.ip, headers)
         if not result:
             mszutl.logIfTurnedOn("Failed to get metadata. Exiting...")
             sys.exit(1)
     elif operation == 'updateinfo':
-        result = mszutl.update_metadata_of_switch(args.ip, headers, args.name, args.location)
+        if args.mqttserver is not None and args.mqttport is not None and args.mqttuser is not None and args.mqttpassword is not None:
+            result = mszutl.update_metadata_of_switch(args.ip, headers, args.name, args.location, args.mqttserver, args.mqttport, args.mqttuser, args.mqttpassword)
+        else:
+            result = mszutl.update_metadata_of_switch(args.ip, headers, args.name, args.location)
         if not result:
             mszutl.logIfTurnedOn("Failed to update metadata. Exiting...")
             sys.exit(1)
