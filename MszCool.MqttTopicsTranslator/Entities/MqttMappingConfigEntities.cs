@@ -18,6 +18,8 @@ namespace MszCool.MqttTopicsTranslator.Entities
         [RegularExpression(@"^[\w\d\s]+$", ErrorMessage = "The source topic must be alphanumeric.")]
         public string SourceTopic { get; set; } = "";
 
+        public string IfMessageValue { get; set; } = "";
+
         [Required]
         public List<string> DestinationTopics { get; set; } = [];
     }

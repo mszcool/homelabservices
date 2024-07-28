@@ -22,6 +22,14 @@
             [
                 "pooltranslatortestresult/stat/test1"
             ]
+        },
+        {
+            "sourceTopic": "pooltranslatortest/test4",
+            "ifMessageValue": "only if this is here",
+            "destinationTopics":
+            [
+                "pooltranslatortestresult/stat/test42"
+            ]
         }
     ]
 }

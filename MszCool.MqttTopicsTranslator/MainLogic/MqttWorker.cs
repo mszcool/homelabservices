@@ -140,6 +140,18 @@ namespace MszCool.MqttTopicsTranslator.Service
 
                     _logger.LogInformation("Publishing message to topic {topic}: {message}", destTopic, message.ConvertPayloadToString());
 
+                    // If there is a message value, then it needs to match the content,
+                    // otherwise always send the content.
+                    if (!string.IsNullOrEmpty(mapping.IfMessageValue))
+                    {
+                        if(string.Compare(mapping.IfMessageValue, message.ConvertPayloadToString(), true) != 0)
+                        {
+                            _logger.LogInformation("The message value does not match the expected value. Skipping the message.");
+                            continue;
+                        }
+                    }
+
+                    // Send the content if there is no filter, or if the filter matches.
                     await _mqttClient.PublishAsync(message);
                 }
             }
