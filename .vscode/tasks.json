@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build .NET Projects",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/MszCoolMqttTopicsTranslator/MszCool.MqttTopicsTranslator.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
