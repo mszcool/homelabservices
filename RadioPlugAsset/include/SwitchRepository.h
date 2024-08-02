@@ -15,7 +15,7 @@ public:
   static constexpr const char *SWITCH_FILENAME_PREFIX = "/swf";
   static constexpr const char *SWITCH_FILENAME_RECEIVE_FILENAME = "/swr";
 
-  static const int SWITCH_MAX_RECEIVE_ENTRIES = 24;
+  static const int SWITCH_MAX_RECEIVE_ENTRIES = 32;
 
 public:
   SwitchDataParams loadSwitchData(String switchName);

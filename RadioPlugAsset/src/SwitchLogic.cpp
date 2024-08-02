@@ -76,6 +76,7 @@ void MszSwitchLogic::handleSwitchReceiveData()
                         else if (failedConnectionAttempts >= SWITCH_MAX_MQTTCONNECT_ATTEMPTS)
                         {
                             Serial.println("MszSwitchLogic::handleSwitchReceiveData - Failed to connect to MQTT server after " + String(failedConnectionAttempts) + " attempts");
+                            ESP.restart();
                             break;
                         }
                         else
