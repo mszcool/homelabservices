@@ -2,6 +2,7 @@ namespace MszCool.MqttTopicsTranslator.Service
 {
     using System;
     using System.Reflection;
+    using System.Reflection.Metadata;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Hosting;
@@ -67,6 +68,11 @@ namespace MszCool.MqttTopicsTranslator.Service
                 _mqttMappingConfig.Add(mapping.SourceTopic, mapping);
             }
 
+            // Setup standard event handlers
+            _mqttClient.ConnectedAsync += this.HandleConnectedAsync;
+            _mqttClient.DisconnectedAsync += this.HandleDisconnectedAsync;
+            _mqttClient.ApplicationMessageReceivedAsync += this.HandleIncomingMessage;
+
             // Connecting to the MQTT Server...
             await _mqttClient.ConnectAsync(_mqttClientOptions, cancellationToken);
 
@@ -78,21 +84,12 @@ namespace MszCool.MqttTopicsTranslator.Service
             // Subscribe to the MQTT events
             _logger.LogInformation("Subscribing to the MQTT events...");
             _shallReconnect = true;
-            _mqttClient.DisconnectedAsync += this.ReconnectIfNeeded;
-            _mqttClient.ApplicationMessageReceivedAsync += this.HandleIncomingMessage;
-
-            // Subscribe to the topics of interest for this worker
-            foreach (var mapping in _mqttMappingConfig)
-            {
-                _logger.LogInformation("Subscribing to topic {topic}", mapping.Key);
-                await _mqttClient.SubscribeAsync(mapping.Key);
-            }
 
             // Main execution loop is not really doing anything but printing logs...
             var lastLogTime = DateTimeOffset.Now;
             while (!stoppingToken.IsCancellationRequested)
             {
-                if(lastLogTime.AddMinutes(5) < DateTimeOffset.Now)
+                if (lastLogTime.AddMinutes(60) < DateTimeOffset.Now)
                 {
                     _logger.LogInformation("Mqtt Translation Worker running at: {time}", DateTimeOffset.Now);
                     lastLogTime = DateTimeOffset.Now;
@@ -106,14 +103,27 @@ namespace MszCool.MqttTopicsTranslator.Service
             _logger.LogInformation("Stopping the MQTT worker...");
             // Unsubscribe from the MQTT events, and do not attempt to reconnect.
             _shallReconnect = false;
-            _mqttClient.DisconnectedAsync -= this.ReconnectIfNeeded;
+            _mqttClient.ConnectedAsync -= this.HandleConnectedAsync;
+            _mqttClient.DisconnectedAsync -= this.HandleDisconnectedAsync;
             _mqttClient.ApplicationMessageReceivedAsync -= this.HandleIncomingMessage;
             await _mqttClient.DisconnectAsync();
         }
 
         #region Private event handling methods
 
-        private async Task ReconnectIfNeeded(MqttClientDisconnectedEventArgs args)
+        private async Task HandleConnectedAsync(MqttClientConnectedEventArgs args)
+        {
+            _logger.LogInformation("Connected to the MQTT server, subscribing to topics...");
+
+            // Subscribe to the topics of interest for this worker
+            foreach (var mapping in _mqttMappingConfig)
+            {
+                _logger.LogInformation("Subscribing to topic {topic}", mapping.Key);
+                await _mqttClient.SubscribeAsync(mapping.Key);
+            }
+        }
+
+        private async Task HandleDisconnectedAsync(MqttClientDisconnectedEventArgs args)
         {
             if (_shallReconnect)
             {
@@ -144,7 +154,7 @@ namespace MszCool.MqttTopicsTranslator.Service
                     // otherwise always send the content.
                     if (!string.IsNullOrEmpty(mapping.IfMessageValue))
                     {
-                        if(string.Compare(mapping.IfMessageValue, message.ConvertPayloadToString(), true) != 0)
+                        if (string.Compare(mapping.IfMessageValue, message.ConvertPayloadToString(), true) != 0)
                         {
                             _logger.LogInformation("The message value does not match the expected value. Skipping the message.");
                             continue;
