@@ -144,7 +144,7 @@ namespace MszCool.MqttTopicsTranslator.Service
                     var message = new MqttApplicationMessageBuilder()
                         .WithTopic(destTopic)
                         .WithPayload(args.ApplicationMessage.PayloadSegment)
-                        .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                        .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
                         .WithRetainFlag()
                         .Build();
 
