@@ -1,0 +1,4 @@
+0 6 * * *       /root/depthTime.sh
+0 12 * * *      /root/depthTime.sh
+0 18 * * *      /root/depthTime.sh
+0 0 * * *       /root/depthTime.sh
