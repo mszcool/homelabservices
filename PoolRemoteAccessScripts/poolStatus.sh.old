@@ -1,0 +1,12 @@
+# Pump on
+#curl -s "http://192.168.99.58/cm?user=admin&password=$wifiPassword&cmnd=STATUS" | jq
+# Redox ON
+#curl -s "http://192.168.99.61/cm?user=admin&password=$wifiPassword&cmnd=STATUS" | jq
+
+# First subscribe to the MQTT topics for the status of both switches
+mosquitto_sub -t pumplight/stat/RESULT -h 192.168.99.218 -u $mqttUser -P $mqttPwd -C 1 -F "%j" --pretty &
+mosquitto_sub -t redoxph/stat/RESULT -h 192.168.99.218 -u $mqttUser -P $mqttPwd -C 1 -F "%j" --pretty &
+
+# Now request the corresponding update by sending the message
+mosquitto_pub -t pumplight/cmnd/State -h 192.168.99.218 -u $mqttUser -P $mqttPwd -n
+mosquitto_pub -t redoxph/cmnd/State -h 192.168.99.218 -u $mqttUser -P $mqttPwd -n
