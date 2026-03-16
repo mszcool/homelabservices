@@ -1,1 +1,1 @@
-/root/depth/pyenv/bin/python /root/depth/assetDepthSensor.py --ip $depthIp --secret $depthSecret settime
+$HOME/depth/pyenv/bin/python $HOME/depth/assetDepthSensor.py --ip $depthIp --secret $depthSecret settime
