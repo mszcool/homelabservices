@@ -10,6 +10,17 @@
 #define ULTRASOUND_SENSOR_SEND_PIN 23
 #define ULTRASOUND_SENSOR_RECEIVE_PIN 22
 
+// Maximum time to wait for the ultrasonic echo before giving up on a single
+// measurement. This prevents the busy-wait loops from blocking forever if the
+// echo pulse never returns (e.g. sensor fault or object out of range).
+// ~30 ms corresponds to a round-trip distance well beyond the sensor's usable
+// range (> 5 m), so a valid reading will always complete before this elapses.
+#define ULTRASOUND_MEASUREMENT_TIMEOUT_MICROS 30000UL
+
+// Sentinel returned by createMeasurement() when no valid echo was received
+// within ULTRASOUND_MEASUREMENT_TIMEOUT_MICROS.
+#define ULTRASOUND_MEASUREMENT_INVALID -1.0f
+
 #define MIN_MEASURE_INTERVAL_IN_SECONDS 1
 #define DEFAULT_MEASURE_INTERVAL_IN_SECONDS (60 * 5)
 #define MAX_MEASURE_INTERVAL_IN_SECONDS 32767

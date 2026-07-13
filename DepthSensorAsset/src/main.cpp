@@ -38,16 +38,32 @@ float createMeasurement()
   delayMicroseconds(3);
   digitalWrite(ULTRASOUND_SENSOR_SEND_PIN, LOW);
 
+  // Wait for the echo pulse to begin, but never block forever. If no pulse is
+  // seen within the timeout, treat the measurement as invalid and bail out.
+  // Unsigned subtraction of micros() values is overflow-safe (wraparound is
+  // handled correctly), so this remains reliable even across the ~71 minute
+  // micros() rollover.
+  unsigned long waitStartTime = micros();
   while (digitalRead(ULTRASOUND_SENSOR_RECEIVE_PIN) == LOW)
   {
-    // Do nothing, wait for the pulse to come back.
+    if ((micros() - waitStartTime) >= ULTRASOUND_MEASUREMENT_TIMEOUT_MICROS)
+    {
+      Serial.println("createMeasurement - timed out waiting for echo start, returning invalid measurement.");
+      return ULTRASOUND_MEASUREMENT_INVALID;
+    }
   }
 
   unsigned long startTime = micros();
 
+  // Wait for the echo pulse to end, again guarded by a timeout so a stuck-high
+  // receive pin cannot hang the device.
   while (digitalRead(ULTRASOUND_SENSOR_RECEIVE_PIN) == HIGH)
   {
-    // Do nothing, wait for the pulse to end.
+    if ((micros() - startTime) >= ULTRASOUND_MEASUREMENT_TIMEOUT_MICROS)
+    {
+      Serial.println("createMeasurement - timed out waiting for echo end, returning invalid measurement.");
+      return ULTRASOUND_MEASUREMENT_INVALID;
+    }
   }
 
   unsigned long endTime = micros();
@@ -129,9 +145,17 @@ void loop() {
     // Print the measurement
     Serial.println("-- Measurement time: " + String(depthMeasurement.measurementTime));
     Serial.println("-- Measurement in cm: " + String(depthMeasurement.measurementInCm));
-    
-    // Store the measurement in the repository.
-    depthRepository->addMeasurement(depthMeasurement);
+
+    // Only store valid measurements. A timed-out reading returns the invalid
+    // sentinel and is skipped so it does not pollute the in-memory history.
+    if (depthMeasurement.measurementInCm != ULTRASOUND_MEASUREMENT_INVALID)
+    {
+      depthRepository->addMeasurement(depthMeasurement);
+    }
+    else
+    {
+      Serial.println("-- Skipping invalid measurement (sensor timeout).");
+    }
 
     // Update the last measurement time
     lastMeasurementTime = currentTime;
